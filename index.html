@@ -2351,7 +2351,7 @@ const firebaseConfig = {
             </div>
             <div style="padding:1rem;text-align:center;">
               <img src="${thumbUrl}" alt="${code}" style="max-width:100%;max-height:520px;object-fit:contain;border-radius:6px;"
-                onerror="this.src=''; this.parentElement.innerHTML='<div style=\'padding:2rem;color:var(--muted);font-family:\'DM Mono\',monospace;font-size:0.82rem;\'>⚠️ Imagem não disponível. Verifique se o arquivo está público no Drive. <a href=\'${driveUrl}\' target=\'_blank\' style=\'color:var(--accent)\'>Abrir no Drive ↗</a></div>'" />
+                onerror="this.src='';this.parentElement.innerHTML='<div style=\'padding:2rem;color:var(--muted);font-family:\'DM Mono\',monospace;font-size:0.82rem;\'>⚠️ Imagem não disponível. Verifique se o arquivo está público no Drive. <a href=\'${driveUrl}\' target=\'_blank\' style=\'color:var(--accent)\'>Abrir no Drive ↗</a></div>'" />
             </div>
           </div>`;
         imgDiv.style.display = 'block';
@@ -2522,12 +2522,9 @@ const firebaseConfig = {
   function extractDriveId(val) {
     if (!val) return '';
     val = val.trim();
-    // ID bruto (sem http)
     if (!val.startsWith('http')) return val;
-    // /d/ID/
     const m1 = val.match(/\/d\/([a-zA-Z0-9_-]{10,})/);
     if (m1) return m1[1];
-    // ?id=ID ou &id=ID
     const m2 = val.match(/[?&]id=([a-zA-Z0-9_-]{10,})/);
     if (m2) return m2[1];
     return val;
