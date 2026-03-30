@@ -161,9 +161,11 @@ const firebaseConfig = {
         loginScreen.style.display = 'none';
         appContent.style.display  = 'flex';
         userInfo.innerHTML = `
-          <img src="${user.photoURL || ''}" style="width:24px;height:24px;border-radius:50%;object-fit:cover;flex-shrink:0;" onerror="this.style.display='none'"/>
-          <span style="font-size:0.72rem;color:var(--muted);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:140px;">${user.email}</span>
-          <button class="btn-ghost" onclick="window._fbSignOut()" style="font-size:0.7rem;padding:0.25rem 0.6rem;width:100%;margin-top:0.25rem;">Sair</button>
+          <span style="font-size:0.72rem;color:var(--muted);font-family:'DM Mono',monospace;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px;">${user.displayName || user.email}</span>
+          <div style="display:flex;align-items:center;gap:0.5rem;">
+            <img src="${user.photoURL || ''}" style="width:24px;height:24px;border-radius:50%;object-fit:cover;flex-shrink:0;" onerror="this.style.display='none'"/>
+            <button class="btn-ghost" onclick="window._fbSignOut()" style="font-size:0.7rem;padding:0.25rem 0.6rem;flex:1;">Sair</button>
+          </div>
         `;
         if (typeof loadFromSheets === 'function') loadFromSheets();
       } else {
@@ -237,7 +239,8 @@ const firebaseConfig = {
       height: 100vh;
       position: fixed;
       left: 0; top: 0;
-      z-index: 200;
+      z-index: 2000;
+      isolation: isolate;
       overflow-y: auto;
       overflow-x: hidden;
     }
@@ -352,6 +355,9 @@ const firebaseConfig = {
 
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
+    @media (max-width: 700px) {
+      .tab-panel.active { padding-top: 0.5rem; }
+    }
 
     /* ── MOBILE TOPBAR ────────────────────────────────────────────────── */
     .mob-menu-btn {
@@ -401,7 +407,7 @@ const firebaseConfig = {
       position: fixed;
       inset: 0;
       background: rgba(0,0,0,0.55);
-      z-index: 199;
+      z-index: 1999;
       backdrop-filter: blur(2px);
     }
     .sidebar-overlay.open { display: block; }
@@ -418,7 +424,7 @@ const firebaseConfig = {
       .main-content {
         margin-left: 0;
         padding: 1rem 0.9rem;
-        padding-top: env(safe-area-inset-top, 0px);
+        padding-top: max(1rem, env(safe-area-inset-top, 1rem));
       }
       .mob-menu-btn { display: flex !important; }
       .mob-topbar-inner { display: flex !important; }
@@ -961,10 +967,17 @@ const firebaseConfig = {
       padding-top: 1.25rem;
       border-top: 1px solid var(--border);
       display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
+      flex-direction: column;
+      align-items: flex-start;
       gap: 0.5rem;
+    }
+
+    @media (min-width: 600px) {
+      footer {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+      }
     }
 
     .footer-name {
@@ -1046,7 +1059,7 @@ const firebaseConfig = {
       .sheets-status { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
       .results-header { flex-direction: column; align-items: flex-start; }
       .results-header > div:last-child { flex-wrap: wrap; }
-      footer { flex-direction: column; gap: 0.5rem; text-align: center; align-items: center; }
+      footer { flex-direction: column; gap: 0.5rem; text-align: left; align-items: flex-start; }
       .info-card { font-size: 0.82rem; }
       .toast { left: 1rem; right: 1rem; bottom: 1rem; max-width: 100%; }
       .mapper { padding: 1rem; }
@@ -1283,10 +1296,35 @@ const firebaseConfig = {
     /* ══ FIM TAB: CAMPO ══════════════════════════════════════════════ */
 
     /* ══ TAB: MAPA POSTES ════════════════════════════════════════════ */
-    #mapa-leaflet { width:100%; height:500px; border-radius:var(--radius); border:1px solid var(--border); }
-    .mapa-search-wrap { display:flex; gap:0.75rem; align-items:center; margin-bottom:1.25rem; flex-wrap:wrap; }
+    #mapa-leaflet, #equip-leaflet { width:100%; height:500px; border-radius:var(--radius); border:1px solid var(--border); }
+    #mapa-leaflet .leaflet-pane,
+    #equip-leaflet .leaflet-pane { z-index: auto; }
+    #mapa-leaflet .leaflet-top,
+    #mapa-leaflet .leaflet-bottom,
+    #equip-leaflet .leaflet-top,
+    #equip-leaflet .leaflet-bottom { z-index: 400; }
+    /* Força todos os elementos do Leaflet abaixo do sidebar */
+    .leaflet-container,
+    .leaflet-pane,
+    .leaflet-tile-pane,
+    .leaflet-overlay-pane,
+    .leaflet-shadow-pane,
+    .leaflet-marker-pane,
+    .leaflet-tooltip-pane,
+    .leaflet-popup-pane,
+    .leaflet-top,
+    .leaflet-bottom,
+    .leaflet-control-container { z-index: auto !important; }
+    .leaflet-top.leaflet-left,
+    .leaflet-top.leaflet-right,
+    .leaflet-bottom.leaflet-left,
+    .leaflet-bottom.leaflet-right { z-index: 400 !important; }
+    @media (max-width: 700px) {
+      #mapa-leaflet, #equip-leaflet { height:320px; }
+    }
+    .mapa-search-wrap { display:flex; gap:0.75rem; align-items:center; margin-bottom:1.25rem; flex-wrap:nowrap; }
     .mapa-search-wrap input {
-      flex:1; min-width:180px;
+      flex:1; min-width:0;
       background:var(--surface); border:1px solid var(--border);
       color:var(--text); border-radius:var(--radius);
       padding:0.7rem 1rem; font-family:'DM Mono',monospace; font-size:0.9rem;
@@ -1420,10 +1458,12 @@ const firebaseConfig = {
     <button class="tab" data-tab="elos"><span class="tab-icon">⚡</span> Elos</button>
     <button class="tab" data-tab="tracao"><span class="tab-icon">📐</span> Tração Postes</button>
     <button class="tab" data-tab="cintas"><span class="tab-icon">🔗</span> Cintas</button>
+    <button class="tab" data-tab="conectores"><span class="tab-icon">🔌</span> Conectores</button>
     <button class="tab" data-tab="atualizar"><span class="tab-icon">⬆️</span> Atualizar Dados</button>
     <button class="tab" data-tab="kanban"><span class="tab-icon">📋</span> Kanban</button>
     <button class="tab" data-tab="campo"><span class="tab-icon">📎</span> Campo</button>
     <button class="tab" data-tab="mapa"><span class="tab-icon">🗺️</span> Mapa Postes</button>
+    <button class="tab" data-tab="equipamentos"><span class="tab-icon">⚙️</span> Equipamentos</button>
 
     <!-- Divisor -->
     <div style="height:1px;background:var(--border);margin:0.5rem 0.3rem;"></div>
@@ -1441,7 +1481,7 @@ const firebaseConfig = {
       <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor"><path d="M1 1l22 22M16.72 11.06A10.94 10.94 0 0119 12.55M5 12.55a10.94 10.94 0 015.17-2.39M10.71 5.05A16 16 0 0122.56 9M1.42 9a15.91 15.91 0 014.7-2.88M8.53 16.11a6 6 0 016.95 0M12 20h.01"/></svg>
       Modo offline
     </div>
-    <div id="userInfo" style="display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;margin-bottom:0.5rem;"></div>
+    <div id="userInfo" style="display:flex;flex-direction:column;gap:0.35rem;margin-bottom:0.5rem;"></div>
     <button class="theme-toggle" id="themeToggle" style="width:100%;justify-content:center;">🌙 Escuro</button>
   </div>
 </nav>
@@ -2117,6 +2157,60 @@ const firebaseConfig = {
     </div>
   </div>
   <div id="cinta_indisponivel" style="display:none;font-family:'DM Mono',monospace;font-size:0.85rem;color:var(--muted);padding:0.75rem 0;">— Não aplicável para este poste.</div>
+
+  <!-- ── SELETOR 2: Por altura de montagem ─────────────────────────── -->
+  <div style="margin-top:2rem;padding-top:1.5rem;border-top:1px solid var(--border);">
+    <div style="font-family:'DM Mono',monospace;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:1rem;">
+      📐 Por altura de montagem
+    </div>
+    <div class="map-grid" style="margin-bottom:1rem;">
+      <div class="map-field">
+        <label>Poste <span style="color:var(--accent)">*</span></label>
+        <select id="cinta2_poste" class="cabo-input" onchange="calcularCinta2()">
+          <option value="">— selecione —</option>
+          <option>9m / 200 daN</option><option>9m / 400 daN</option><option>9m / 600 daN</option>
+          <option>9m / 1000 daN</option><option>9m / 1500 daN</option>
+          <option>10m / 200 daN</option><option>10m / 400 daN</option><option>10m / 600 daN</option>
+          <option>10m / 1000 daN</option>
+          <option>11m / 200 daN</option><option>11m / 400 daN</option><option>11m / 600 daN</option>
+          <option>11m / 1000 daN</option><option>11m / 1200 daN</option><option>11m / 1500 daN</option>
+          <option>12m / 200 daN</option><option>12m / 400 daN</option><option>12m / 600 daN</option>
+          <option>12m / 1000 daN</option><option>12m / 1200 daN</option><option>12m / 1500 daN</option>
+          <option>13m / 200 daN</option><option>13m / 400 daN</option><option>13m / 600 daN</option>
+          <option>13m / 1000 daN</option>
+        </select>
+      </div>
+      <div class="map-field">
+        <label>Altura de montagem (m) <span style="color:var(--accent)">*</span></label>
+        <input type="number" id="cinta2_altura" min="0" step="0.1" placeholder="ex: 2.5"
+          style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:0.5rem 0.75rem;font-family:'DM Mono',monospace;font-size:0.82rem;outline:none;transition:border-color 0.2s;"
+          oninput="calcularCinta2()" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"/>
+      </div>
+      <div class="map-field">
+        <label>Referência <span style="color:var(--accent)">*</span></label>
+        <div style="display:flex;gap:0.5rem;margin-top:2px;">
+          <button id="cinta2_btn_topo" onclick="setCinta2Ref('topo')"
+            style="flex:1;padding:0.45rem 0.5rem;border-radius:6px;font-family:'DM Mono',monospace;font-size:0.75rem;font-weight:600;cursor:pointer;transition:all 0.2s;background:var(--accent);color:#060f0a;border:1px solid var(--accent);">
+            Do topo
+          </button>
+          <button id="cinta2_btn_solo" onclick="setCinta2Ref('solo')"
+            style="flex:1;padding:0.45rem 0.5rem;border-radius:6px;font-family:'DM Mono',monospace;font-size:0.75rem;font-weight:600;cursor:pointer;transition:all 0.2s;background:none;color:var(--muted);border:1px solid var(--border);">
+            Do solo
+          </button>
+        </div>
+      </div>
+    </div>
+    <div id="cinta2_resultado" style="display:none;" class="cabo-resultado">
+      <div class="cabo-res-row">
+        <div class="cabo-res-item"><span class="cabo-res-label">Poste</span><span class="cabo-res-val" id="cinta2_res_poste">—</span></div>
+        <div class="cabo-res-item"><span class="cabo-res-label">Altura</span><span class="cabo-res-val" id="cinta2_res_altura">—</span></div>
+        <div class="cabo-res-item"><span class="cabo-res-label">Ø estimado</span><span class="cabo-res-val" id="cinta2_res_diam">—</span></div>
+        <div class="cabo-res-item destaque"><span class="cabo-res-label">Cinta</span><span class="cabo-res-val" id="cinta2_res_cinta">—</span></div>
+      </div>
+    </div>
+    <div id="cinta2_erro" style="display:none;font-family:'DM Mono',monospace;font-size:0.85rem;color:var(--danger);padding:0.75rem 0;"></div>
+  </div>
+
   <div style="margin-top:1.5rem;">
     <div style="font-family:'DM Mono',monospace;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:0.75rem;">Tabela completa de referência</div>
     <div class="table-wrap">
@@ -2156,14 +2250,13 @@ const firebaseConfig = {
   <div>
     <div style="font-family:'DM Mono',monospace;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:4px;">Criado por</div>
     <span class="footer-name">Pedro Scherdien</span>
+    <div style="font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--muted);margin-top:3px;">
+      SetupBoom © 2025 · <span style="color:var(--accent);letter-spacing:0.05em;">Técnico PCP 2</span>
+    </div>
   </div>
   <div class="footer-contact">
     <span>📱</span>
     <a href="https://wa.me/5553984742332" target="_blank">(53) 98474-2332</a>
-  </div>
-  <div style="font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--muted);text-align:right;line-height:1.6;">
-    SetupBoom © 2025<br/>
-    <span style="color:var(--accent);letter-spacing:0.05em;">Técnico PCP 2 </span>
   </div>
 </footer>
 
@@ -2189,11 +2282,13 @@ const firebaseConfig = {
     'elos':        'Elos',
     'tracao':      'Tração Postes',
     'cintas':      'Cintas',
+    'conectores':  'Conectores',
     'inicio':      'Início',
     'atualizar':   'Atualizar Dados',
     'kanban':      'Kanban',
     'campo':       'Campo',
     'mapa':        'Mapa Postes',
+    'equipamentos':'Equipamentos',
     'quem-somos':  'Quem Somos',
   };
 
@@ -2744,6 +2839,85 @@ const firebaseConfig = {
     resDiv.style.display='block';
   }
 
+  // ── Calculadora 2: Por altura de montagem ──────────────────────────
+  const CINTA2_POSTES = [
+    { label:'9m / 200 daN',  comp:9,  topo:150, base:330 },
+    { label:'9m / 400 daN',  comp:9,  topo:170, base:350 },
+    { label:'9m / 600 daN',  comp:9,  topo:190, base:370 },
+    { label:'9m / 1000 daN', comp:9,  topo:230, base:410 },
+    { label:'9m / 1500 daN', comp:9,  topo:290, base:470 },
+    { label:'10m / 200 daN', comp:10, topo:150, base:350 },
+    { label:'10m / 400 daN', comp:10, topo:170, base:370 },
+    { label:'10m / 600 daN', comp:10, topo:190, base:390 },
+    { label:'10m / 1000 daN',comp:10, topo:230, base:430 },
+    { label:'11m / 200 daN', comp:11, topo:150, base:370 },
+    { label:'11m / 400 daN', comp:11, topo:170, base:390 },
+    { label:'11m / 600 daN', comp:11, topo:190, base:410 },
+    { label:'11m / 1000 daN',comp:11, topo:230, base:450 },
+    { label:'11m / 1200 daN',comp:11, topo:260, base:480 },
+    { label:'11m / 1500 daN',comp:11, topo:290, base:510 },
+    { label:'12m / 200 daN', comp:12, topo:150, base:390 },
+    { label:'12m / 400 daN', comp:12, topo:170, base:410 },
+    { label:'12m / 600 daN', comp:12, topo:190, base:430 },
+    { label:'12m / 1000 daN',comp:12, topo:230, base:470 },
+    { label:'12m / 1200 daN',comp:12, topo:260, base:500 },
+    { label:'12m / 1500 daN',comp:12, topo:290, base:530 },
+    { label:'13m / 200 daN', comp:13, topo:150, base:410 },
+    { label:'13m / 400 daN', comp:13, topo:170, base:430 },
+    { label:'13m / 600 daN', comp:13, topo:190, base:450 },
+    { label:'13m / 1000 daN',comp:13, topo:230, base:490 },
+  ];
+  const CINTA2_CINTAS = [150,160,170,180,190,200,210,220,230,250,270,290,310];
+  let cinta2Ref = 'topo';
+
+  function setCinta2Ref(ref) {
+    cinta2Ref = ref;
+    const btnT = document.getElementById('cinta2_btn_topo');
+    const btnS = document.getElementById('cinta2_btn_solo');
+    if (ref === 'topo') {
+      btnT.style.cssText += ';background:var(--accent);color:#060f0a;border-color:var(--accent);';
+      btnS.style.cssText += ';background:none;color:var(--muted);border-color:var(--border);';
+    } else {
+      btnS.style.cssText += ';background:var(--accent);color:#060f0a;border-color:var(--accent);';
+      btnT.style.cssText += ';background:none;color:var(--muted);border-color:var(--border);';
+    }
+    calcularCinta2();
+  }
+
+  function calcularCinta2() {
+    const posteLabel = document.getElementById('cinta2_poste').value;
+    const alturaVal  = document.getElementById('cinta2_altura').value;
+    const resDiv  = document.getElementById('cinta2_resultado');
+    const erroDiv = document.getElementById('cinta2_erro');
+    resDiv.style.display = 'none'; erroDiv.style.display = 'none';
+
+    if (!posteLabel || alturaVal === '') return;
+    const altura = parseFloat(alturaVal);
+    if (isNaN(altura) || altura < 0) { erroDiv.textContent = 'Digite uma altura válida.'; erroDiv.style.display = 'block'; return; }
+
+    const poste = CINTA2_POSTES.find(p => p.label === posteLabel);
+    if (!poste) return;
+
+    // distância a partir do topo
+    const distTopo = cinta2Ref === 'topo' ? altura : (poste.comp - altura);
+    if (distTopo < 0 || distTopo > poste.comp) {
+      erroDiv.textContent = `Altura ${altura}m fora do comprimento do poste (${poste.comp}m).`;
+      erroDiv.style.display = 'block'; return;
+    }
+
+    // interpolação linear do diâmetro
+    const diam = Math.round(poste.topo + (poste.base - poste.topo) * (distTopo / poste.comp));
+    // menor cinta >= diam
+    const cinta = CINTA2_CINTAS.find(c => c >= diam);
+    if (!cinta) { erroDiv.textContent = `Diâmetro estimado (${diam}mm) excede o catálogo de cintas (máx 310mm).`; erroDiv.style.display = 'block'; return; }
+
+    document.getElementById('cinta2_res_poste').textContent  = posteLabel;
+    document.getElementById('cinta2_res_altura').textContent = `${altura}m ${cinta2Ref === 'topo' ? 'do topo' : 'do solo'}`;
+    document.getElementById('cinta2_res_diam').textContent   = diam + ' mm';
+    document.getElementById('cinta2_res_cinta').textContent  = cinta + ' mm';
+    resDiv.style.display = 'block';
+  }
+
   let prfFace = 'A'; let prfCodigoAtual = null;
   const prfSearch = document.getElementById('prf_codigoSearch');
   const prfDrop   = document.getElementById('prf_dropdown');
@@ -2873,6 +3047,147 @@ const firebaseConfig = {
     vetG.innerHTML=svgLines; if(diagLeg)diagLeg.innerHTML=legLines.length?legLines.join(''):'Sem tração configurada.';}
   }
   document.addEventListener('DOMContentLoaded', () => { trcBuildLinhas(); document.querySelectorAll('.tab').forEach(btn => { btn.addEventListener('click', () => { if (btn.dataset.tab==='tracao') { if(!document.getElementById('trc_c1_0'))trcBuildLinhas(); calcularTracao(); } }); }); });
+</script>
+
+<!-- TAB: CONECTORES -->
+<div class="tab-panel" id="tab-conectores">
+  <div style="display:flex;align-items:center;gap:16px;margin-bottom:28px;">
+    <div style="font-family:'DM Mono',monospace;font-size:0.68rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);">Cunha de Alumínio</div>
+  </div>
+  <div style="background:var(--surface);border:1px solid var(--border);border-top:2px solid var(--accent);border-radius:10px;padding:20px 20px 16px;margin-bottom:24px;">
+    <div style="font-family:'DM Mono',monospace;font-size:0.7rem;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;">Selecione os cabos</div>
+    <div style="display:flex;gap:16px;align-items:flex-end;flex-wrap:wrap;">
+      <div style="flex:1;min-width:170px;">
+        <div style="font-family:'DM Mono',monospace;font-size:0.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Cabo de origem</div>
+        <select id="cn_selA" onchange="cnSelecionarA()" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:0.5rem 0.75rem;font-family:'DM Mono',monospace;font-size:0.82rem;outline:none;transition:border-color 0.2s;appearance:none;">
+          <option value="">— selecione —</option>
+        </select>
+      </div>
+      <div style="color:var(--muted);font-size:1.3rem;padding-bottom:10px;flex-shrink:0;">→</div>
+      <div style="flex:1;min-width:170px;">
+        <div style="font-family:'DM Mono',monospace;font-size:0.65rem;letter-spacing:2px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Conecta com</div>
+        <select id="cn_selB" onchange="cnSelecionarB()" style="width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);border-radius:6px;padding:0.5rem 0.75rem;font-family:'DM Mono',monospace;font-size:0.82rem;outline:none;transition:border-color 0.2s;appearance:none;">
+          <option value="">— selecione —</option>
+        </select>
+      </div>
+      <button onclick="cnLimpar()" style="background:none;border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:0.5rem 1rem;font-family:'Syne',sans-serif;font-weight:600;font-size:0.82rem;cursor:pointer;transition:border-color 0.2s,color 0.2s;flex-shrink:0;" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">Limpar</button>
+    </div>
+  </div>
+  <div id="cn_results">
+    <div style="text-align:center;padding:40px 20px;color:var(--muted);font-family:'DM Mono',monospace;font-size:0.8rem;letter-spacing:2px;text-transform:uppercase;">
+      ⚡ selecione o cabo de origem
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+  const CN_DATA = [
+    { item:1,  cartucho:"VERMELHO", codigo:"124000037", tipo:"CN 12", condutores:"2-6 AWG CA/CAA X 6 AWG CA/CAA; 4 AWG CA/CAA X 4 AWG CA/CAA", a:null, b:null, c:null, d:null },
+    { item:2,  cartucho:"VERMELHO", codigo:"124000038", tipo:"CN 13", condutores:"1/0 AWG CA/CAA X 4 AWG CA/CAA; 1/0 AWG CA/CAA X 2 AWG CA/CAA; 2 AWG CA/CAA X 2 AWG CA/CAA; 35 mm² CA X 35 mm² CA; 50 mm² CA X 35 mm² CA; 50 mm² CA X 50 mm² CA; 2 AWG CA/CAA X 35 mm² CA", a:41, b:32, c:40, d:9 },
+    { item:3,  cartucho:"VERMELHO", codigo:"124000039", tipo:"CN 14", condutores:"1/0 AWG CA/CAA X 6 AWG CA/CAA; 2 AWG CA/CAA X 4 AWG CA/CAA", a:null, b:null, c:null, d:null },
+    { item:4,  cartucho:"AZUL",     codigo:"124000034", tipo:"CN 1",  condutores:"336,4 CAA MCM X 336,4 CA MCM; 336,4 CAA MCM X 336,4 CAA MCM; 35 mm² CA X 35 mm²; 185 mm² CA X 150 mm² CA; 394,5 CAL MCM X 394,5 CAL MCM (CANTON)", a:71, b:50, c:54, d:15 },
+    { item:5,  cartucho:"AZUL",     codigo:"124000035", tipo:"CN 10", condutores:"4/0 AWG CA/CAA X 6 AWG CA/CAA; 4/0 AWG CA/CAA X 4 AWG CA/CAA; 3/0 AWG CA/CAA X 6 AWG CA/CAA; 3/0 AWG CA/CAA X 4 AWG CA/CAA; 3/0 AWG CA/CAA X 2 AWG CA/CAA; 2/0 AWG CA/CAA X 4 AWG CA/CAA; 2/0 AWG CA/CAA X 2 AWG CA/CAA; 2/0 AWG CA/CAA X 1/0 AWG CA/CAA; 1/0 AWG CA/CAA X 2/0 AWG CA/CAA; 1/0 AWG CA/CAA X 2 AWG CA/CAA; 70 mm² CA X 35 mm²; 70 mm² CA X 50mm²; 70 mm² CA X 70 mm²; 3/0 AWG CA/CAA X 35mm² CA; 2/0 AWG CA/CAA X 35-50 mm² CA; 1/0 AWG CA/CAA X 35-50mm² CA; 155,4 CAL MCM X 155,4 CAL MCM (ANAHEIM)", a:66, b:41, c:51, d:13 },
+    { item:6,  cartucho:"AZUL",     codigo:"124000036", tipo:"CN 11", condutores:"2/0 AWG CA/CAA X 6 AWG CA/CAA", a:64, b:42, c:51, d:13 },
+    { item:7,  cartucho:"AZUL",     codigo:"124000040", tipo:"CN 15", condutores:"4/0 AWG CA/CAA X 3/0 AWG CA/CAA; 4/0 AWG CA/CAA X 4/0 AWG CA/CAA; 246,9 CAL MCM X 246,9 CAL MCM (ALLIENCE)", a:67, b:42, c:51, d:13 },
+    { item:8,  cartucho:"AZUL",     codigo:"124000041", tipo:"CN 16", condutores:"336,4 CAA X 3/0 AWG CA/CAA; 336,4 CAA X 4/0 AWG CA/CAA", a:71, b:50, c:54, d:15 },
+    { item:9,  cartucho:"AZUL",     codigo:"124000042", tipo:"CN 17", condutores:"336,4 CAA X 2 AWG CA/CAA; 336,4 CAA X 1/0 AWG CA/CAA; 336,4 CAA X 2/0 AWG CA/CAA", a:71, b:50, c:54, d:15 },
+    { item:10, cartucho:"AZUL",     codigo:"124000043", tipo:"CN 18", condutores:"336,4 CAA X 6 AWG CA/CAA; 336,4 CAA X 4 AWG CA/CAA", a:71, b:50, c:54, d:15 },
+    { item:11, cartucho:"AZUL",     codigo:"124000044", tipo:"CN 2",  condutores:"336,4 MCM CA X 336,4 MCM CA; 150 mm² CA X 150 mm² CA; 185 mm² CA X 185 mm² CA; 336,4 MCM CA X 150-185 mm² CA", a:null, b:null, c:null, d:null },
+    { item:12, cartucho:"AZUL",     codigo:"124000045", tipo:"CN 3",  condutores:"336,4 MCM CA X 2/0 AWG CA/CAA; 336,4 MCM CA X 3/0 AWG CA/CAA; 336,4 MCM CA X 4/0 AWG CA/CAA", a:null, b:null, c:null, d:null },
+    { item:13, cartucho:"AZUL",     codigo:"124000046", tipo:"CN 4",  condutores:"336,4 MCM CA X 2 AWG CA/CAA; 336,4 MCM CA X 1/0 AWG CA/CAA; 150 mm² CA X 70 mm²; 185 mm² CA X 35 mm²; 185 mm² CA X 50 mm²; 185 mm² CA X 70 mm²; 336,4 MCM CA X 35-50-70 mm² CA", a:68, b:51, c:54, d:15 },
+    { item:14, cartucho:"AZUL",     codigo:"124000047", tipo:"CN 5",  condutores:"336,4 MCM CA X 6 AWG CA/CAA; 336,4 MCM CA X 4 AWG CA/CAA", a:null, b:null, c:null, d:null },
+    { item:15, cartucho:"AZUL",     codigo:"124000048", tipo:"CN 6",  condutores:"4/0 AWG CA/CAA X 2 AWG CA/CAA; 4/0 AWG CA/CAA X 1/0 AWG CA/CAA; 4/0 AWG CA/CAA X 2/0 AWG CA/CAA; 3/0 AWG CA/CAA X 1/0 AWG CA/CAA; 3/0 AWG CA/CAA X 2 AWG CA/CAA; 3/0 AWG CA/CAA X 3/0 AWG CA/CAA; 150 mm² CA X 35 mm²; 150 mm² CA X 50 mm²; 4/0 AWG CA/CAA X 35-50-70 mm²", a:67, b:42, c:51, d:13 },
+    { item:16, cartucho:"AMARELO",  codigo:"124000049", tipo:"CN 7",  condutores:"477 MCM CAA X 4-2 AWG CA/CAA; 477 MCM CAA X 1/0 AWG CA/CAA; 477 MCM CAA X 2/0 AWG CA/CAA", a:null, b:null, c:null, d:null },
+    { item:17, cartucho:"AMARELO",  codigo:"124000091", tipo:"CN 8",  condutores:"477 MCM CAA X 3/0 AWG CA/CAA; 477 MCM CAA X 4/0 AWG CA/CAA", a:null, b:null, c:null, d:null },
+    { item:18, cartucho:"AMARELO",  codigo:"124000051", tipo:"CN 9",  condutores:"477 MCM CAA X 336,4 MCM CA/CAA; 477 MCM CAA X 477 MCM CAA", a:null, b:null, c:null, d:null },
+    { item:19, cartucho:"AMARELO",  codigo:"124000065", tipo:"CN 50", condutores:"636 MCM CAA X 636 MCM CAA; RAIL X CANTON", a:100, b:74, c:90, d:21 },
+    { item:20, cartucho:"AMARELO",  codigo:"124000086", tipo:"CN 49", condutores:"795 MCM CAA X 336,4 MCM CA; 636 MCM CAA X 336,4 MCM CA", a:null, b:null, c:null, d:null },
+    { item:21, cartucho:"AMARELO",  codigo:"124000089", tipo:"CN 51", condutores:"927,2 MCM CAA X 927,2 MCM CAL; 954 MCM CA/CAA X 954 MCM CA/CAA; RAIL X FLINT", a:null, b:null, c:null, d:null },
+    { item:22, cartucho:"AMARELO",  codigo:"124000144", tipo:"CN 42", condutores:"266,8 MCM CAA X 2/0 AWG CAA; 336,4 MCM CA X 2/0 AWG CA/CAA; 336,4 MCM CAA X 4/0 AWG CA/CAA; 150 mm² CA X 150 mm² CA", a:null, b:null, c:null, d:null },
+  ];
+
+  function cnParsePairs(cond) {
+    return cond.split(';').map(s=>s.trim()).filter(Boolean).map(pair=>{
+      const p = pair.split(' X '); return { a:p[0]?.trim(), b:p[1]?.trim(), raw:pair };
+    });
+  }
+  function cnNorm(s){ return (s||'').toLowerCase().replace(/\s+/g,' ').replace(/[²]/g,'2').trim(); }
+  function cnSort(s){ return s.includes('AWG')?'0'+s:s.includes('MCM')?'1'+s:(s.includes('mm²')||s.includes('mm2'))?'2'+s:'3'+s; }
+
+  const cnTodosCabos = new Set();
+  CN_DATA.forEach(c => cnParsePairs(c.condutores).forEach(({a,b})=>{ if(a)cnTodosCabos.add(a); if(b)cnTodosCabos.add(b); }));
+  const cnCabosOrd = [...cnTodosCabos].sort((a,b)=>cnSort(a).localeCompare(cnSort(b)));
+
+  const cnSelA = document.getElementById('cn_selA');
+  const cnSelB = document.getElementById('cn_selB');
+
+  cnCabosOrd.forEach(cabo=>{
+    [cnSelA, cnSelB].forEach(sel=>{ const o=document.createElement('option'); o.value=cabo; o.textContent=cabo; sel.appendChild(o); });
+  });
+
+  function cnSelecionarA(){ cnRender(); }
+  function cnSelecionarB(){ cnRender(); }
+
+  function cnRender(){
+    const caboA = cnSelA.value;
+    const caboB = cnSelB.value;
+    const el = document.getElementById('cn_results');
+    if (!caboA && !caboB){ el.innerHTML=`<div style="text-align:center;padding:40px 20px;color:var(--muted);font-family:'DM Mono',monospace;font-size:0.8rem;letter-spacing:2px;text-transform:uppercase;">⚡ selecione o cabo de origem</div>`; return; }
+    const normA = cnNorm(caboA), normB = cnNorm(caboB);
+    const badgeStyle = { VERMELHO:'background:rgba(239,68,68,0.15);color:#f87171;border:1px solid rgba(239,68,68,0.3)', AZUL:'background:rgba(59,130,246,0.15);color:#60a5fa;border:1px solid rgba(59,130,246,0.3)', AMARELO:'background:rgba(245,158,11,0.15);color:#fbbf24;border:1px solid rgba(245,158,11,0.3)' };
+
+    const matches = [];
+    CN_DATA.forEach(c=>{
+      const pares = cnParsePairs(c.condutores).filter(({a,b})=>{
+        const na=cnNorm(a), nb=cnNorm(b);
+        if (caboA && caboB) return (na===normA&&nb===normB)||(na===normB&&nb===normA);
+        if (caboA) return na===normA||nb===normA;
+        if (caboB) return na===normB||nb===normB;
+        return false;
+      });
+      if (pares.length) matches.push({c, pares});
+    });
+
+    if (!matches.length){ el.innerHTML=`<div style="text-align:center;padding:40px 20px;color:var(--muted);font-family:'DM Mono',monospace;font-size:0.8rem;">Nenhum conector encontrado para esta combinação</div>`; return; }
+
+    el.innerHTML = `
+      <div style="font-family:'DM Mono',monospace;font-size:0.68rem;letter-spacing:3px;text-transform:uppercase;color:var(--muted);margin-bottom:14px;display:flex;align-items:center;gap:10px;">
+        <span style="color:var(--accent)">${caboA||'—'}</span>
+        ${caboB?`<span>×</span><span style="color:var(--accent)">${caboB}</span>`:''}
+        <span style="margin-left:4px;">${matches.length} conector${matches.length!==1?'es':''}</span>
+        <span style="flex:1;height:1px;background:var(--border);display:block;"></span>
+      </div>
+      <div class="table-wrap">
+      <table>
+        <thead><tr>
+          <th>Tipo / Cód.</th>
+          <th>Cartucho</th>
+          <th>Par</th>
+          <th>Dim (mm)</th>
+        </tr></thead>
+        <tbody>
+          ${matches.map(({c, pares})=>{
+            const bs = badgeStyle[c.cartucho]||'';
+            const dims = (c.a||c.b||c.c||c.d)
+              ? ['a','b','c','d'].map(l=>`<span style="background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:2px 6px;font-family:'DM Mono',monospace;font-size:0.72rem;">${l.toUpperCase()} <strong>${c[l]}</strong></span>`).join(' ')
+              : `<span style="color:var(--muted);font-size:0.72rem;font-family:'DM Mono',monospace;">N/D</span>`;
+            const rows = pares.map(({raw})=>`<div style="font-family:'DM Mono',monospace;font-size:0.78rem;color:var(--text);padding:2px 0;">→ ${raw}</div>`).join('');
+            return `<tr>
+              <td><div style="font-weight:700;font-size:1rem;color:var(--accent)">${c.tipo}</div><div style="font-family:'DM Mono',monospace;font-size:0.72rem;color:var(--muted);margin-top:2px;">${c.codigo}</div></td>
+              <td><span style="display:inline-block;border-radius:4px;padding:3px 9px;font-family:'DM Mono',monospace;font-size:0.72rem;font-weight:700;letter-spacing:1px;${bs}">${c.cartucho}</span></td>
+              <td>${rows}</td>
+              <td>${dims}</td>
+            </tr>`;
+          }).join('')}
+        </tbody>
+      </table>
+      </div>`;
+  }
+
+  window.cnSelecionarA = cnSelecionarA;
+  window.cnSelecionarB = cnSelecionarB;
+  window.cnLimpar = function(){ cnSelA.value=''; cnSelB.value=''; cnRender(); };
+})();
 </script>
 
 <!-- TAB: KANBAN -->
@@ -3068,7 +3383,7 @@ document.addEventListener('DOMContentLoaded',()=>{kbLoad();});
   <div style="max-width:860px;margin:0 auto;">
 
     <div style="margin-bottom:1.5rem;">
-      <h1 style="font-size:1.5rem;font-weight:800;letter-spacing:-0.03em;margin-bottom:0.3rem;">
+      <h1 style="font-size:2rem;font-weight:800;letter-spacing:-0.03em;margin-bottom:0.3rem;">
         Mapa de <span style="color:var(--accent)">Postes</span>
       </h1>
       <p style="font-family:'DM Mono',monospace;font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;">
@@ -3078,7 +3393,7 @@ document.addEventListener('DOMContentLoaded',()=>{kbLoad();});
 
     <!-- Barra de busca com autocomplete -->
     <div class="mapa-search-wrap" style="position:relative;">
-      <input type="text" id="mapa-input" placeholder="Digite o número do poste..." autocomplete="off" oninput="window.mapaFiltrar()" />
+      <input type="text" id="mapa-input" placeholder="Nº do poste..." autocomplete="off" oninput="window.mapaFiltrar()" />
       <button class="btn" onclick="window.mapaBuscarPoste()">🔍 Localizar</button>
       <div id="mapa-dropdown" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--surface);border:1px solid var(--accent);border-radius:var(--radius);max-height:220px;overflow-y:auto;z-index:200;box-shadow:0 8px 32px rgba(0,0,0,0.5);"></div>
     </div>
@@ -3543,7 +3858,26 @@ document.querySelectorAll('.tab').forEach(btn => {
     document.head.appendChild(link);
     const script = document.createElement('script');
     script.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
-    script.onload = () => { leafletLoaded = true; cb(); };
+    script.onload = () => {
+      leafletLoaded = true;
+      // Override z-indexes do Leaflet para não tapar a sidebar
+      if (!document.getElementById('leaflet-zindex-fix')) {
+        const s = document.createElement('style');
+        s.id = 'leaflet-zindex-fix';
+        s.textContent = `
+          .leaflet-pane { z-index: auto !important; }
+          .leaflet-tile-pane { z-index: 200 !important; }
+          .leaflet-overlay-pane { z-index: 300 !important; }
+          .leaflet-shadow-pane { z-index: 400 !important; }
+          .leaflet-marker-pane { z-index: 500 !important; }
+          .leaflet-tooltip-pane { z-index: 550 !important; }
+          .leaflet-popup-pane { z-index: 600 !important; }
+          .leaflet-top, .leaflet-bottom { z-index: 700 !important; }
+        `;
+        document.head.appendChild(s);
+      }
+      cb();
+    };
     document.head.appendChild(script);
   }
 
@@ -3685,6 +4019,330 @@ document.querySelectorAll('.tab').forEach(btn => {
     if (inp) inp.addEventListener('keydown', e => {
       if (e.key === 'Enter') window.mapaBuscarPoste();
       if (e.key === 'Escape') document.getElementById('mapa-dropdown').style.display = 'none';
+    });
+  });
+})();
+</script>
+
+<!-- ══════════════════════════════════════════════════════ -->
+<!-- TAB: EQUIPAMENTOS                                      -->
+<!-- ══════════════════════════════════════════════════════ -->
+<div class="tab-panel" id="tab-equipamentos">
+  <div style="max-width:860px;margin:0 auto;">
+
+    <div style="margin-bottom:1.5rem;">
+      <h1 style="font-size:2rem;font-weight:800;letter-spacing:-0.03em;margin-bottom:0.3rem;">
+        Consulta de <span style="color:var(--accent)">Equipamentos</span>
+      </h1>
+      <p style="font-family:'DM Mono',monospace;font-size:0.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;">
+        Busca por número do equipamento · Google Sheets
+      </p>
+    </div>
+
+    <!-- Barra de busca -->
+    <div class="mapa-search-wrap" style="position:relative;">
+      <input type="text" id="equip-input"
+        placeholder="Nº do equipamento..."
+        autocomplete="off"
+        oninput="equipFiltrar()"
+      />
+      <button class="btn" onclick="equipBuscar()">🔍 Buscar</button>
+      <div id="equip-dropdown"
+        style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;
+               background:var(--surface);border:1px solid var(--accent);border-radius:var(--radius);
+               max-height:220px;overflow-y:auto;z-index:200;box-shadow:0 8px 32px rgba(0,0,0,0.5);">
+      </div>
+    </div>
+
+    <!-- Status -->
+    <div class="mapa-status" id="equip-status">
+      Carregando equipamentos...
+    </div>
+
+    <!-- Card resultado (igual ao mapa-info-card do Mapa Postes) -->
+    <div class="mapa-info-card" id="equip-card">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:0.75rem;">
+        <div>
+          <div class="mi-label">Número</div>
+          <div class="mi-val accent" id="equip-num">—</div>
+        </div>
+        <div>
+          <div class="mi-label">Alimentador</div>
+          <div class="mi-val" id="equip-alim">—</div>
+        </div>
+        <div>
+          <div class="mi-label">Tipo</div>
+          <div class="mi-val" id="equip-tipo">—</div>
+        </div>
+        <div>
+          <div class="mi-label">Nome</div>
+          <div class="mi-val" id="equip-nome">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabela múltiplos resultados -->
+    <div id="equip-tabela-wrap" style="display:none;margin-bottom:1.25rem;">
+      <div style="font-family:'DM Mono',monospace;font-size:0.72rem;color:var(--muted);margin-bottom:0.5rem;" id="equip-tabela-label"></div>
+      <div style="overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border);">
+        <table id="equip-tabela" style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+          <thead>
+            <tr style="background:var(--surface);">
+              <th style="padding:0.6rem 0.9rem;text-align:left;font-family:'DM Mono',monospace;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);border-bottom:1px solid var(--border);">Número</th>
+              <th style="padding:0.6rem 0.9rem;text-align:left;font-family:'DM Mono',monospace;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);border-bottom:1px solid var(--border);">Alimentador</th>
+              <th style="padding:0.6rem 0.9rem;text-align:left;font-family:'DM Mono',monospace;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);border-bottom:1px solid var(--border);">Tipo</th>
+              <th style="padding:0.6rem 0.9rem;text-align:left;font-family:'DM Mono',monospace;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);border-bottom:1px solid var(--border);">Nome</th>
+            </tr>
+          </thead>
+          <tbody id="equip-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Mapa Leaflet equipamentos — sempre visível -->
+    <div id="equip-leaflet"></div>
+
+    <div style="margin-top:0.75rem;font-family:'DM Mono',monospace;font-size:0.68rem;color:var(--muted);">
+      ⚙️ Mapa via OpenStreetMap · Dados carregados da aba "EQUIPAMENTOS" do Google Sheets
+    </div>
+  </div>
+</div><!-- /tab-equipamentos -->
+
+<script>
+(function() {
+  const EQUIP_ABA = 'EQUIPAMENTOS';
+
+  let equipDados = [];
+  let equipCarregado = false;
+  let equipLeafletLoaded = false;
+  let equipMap = null;
+  let equipMarker = null;
+
+  function carregarEquipLeaflet(cb) {
+    if (equipLeafletLoaded) { cb(); return; }
+    if (typeof L !== 'undefined') { equipLeafletLoaded = true; cb(); return; }
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.href = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css';
+    document.head.appendChild(link);
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js';
+    script.onload = () => {
+      equipLeafletLoaded = true;
+      if (!document.getElementById('leaflet-zindex-fix')) {
+        const s = document.createElement('style');
+        s.id = 'leaflet-zindex-fix';
+        s.textContent = `
+          .leaflet-pane { z-index: auto !important; }
+          .leaflet-tile-pane { z-index: 200 !important; }
+          .leaflet-overlay-pane { z-index: 300 !important; }
+          .leaflet-shadow-pane { z-index: 400 !important; }
+          .leaflet-marker-pane { z-index: 500 !important; }
+          .leaflet-tooltip-pane { z-index: 550 !important; }
+          .leaflet-popup-pane { z-index: 600 !important; }
+          .leaflet-top, .leaflet-bottom { z-index: 700 !important; }
+        `;
+        document.head.appendChild(s);
+      }
+      cb();
+    };
+    document.head.appendChild(script);
+  }
+
+  function initEquipMapa() {
+    if (equipMap) return;
+    const el = document.getElementById('equip-leaflet');
+    if (!el) return;
+    equipMap = L.map('equip-leaflet').setView([-31.7654, -52.3376], 10);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap', maxZoom: 19
+    }).addTo(equipMap);
+  }
+
+  function tipoLabel(icone) {
+    if (!icone) return { label: 'Desconhecido', emoji: '❓' };
+    const ic = icone.toUpperCase();
+    if (ic.includes('FACA'))   return { label: 'Faca',          emoji: '🔪' };
+    if (ic.includes('FUSIV') || ic.includes('FUSI')) return { label: 'Fusível', emoji: '⚡' };
+    if (ic.includes('TRANS'))  return { label: 'Transformador', emoji: '🔌' };
+    if (ic.includes('CHAVE'))  return { label: 'Chave',         emoji: '🔑' };
+    if (ic.includes('RELIGAD')) return { label: 'Religador',    emoji: '🔄' };
+    return { label: icone, emoji: '⚙️' };
+  }
+
+  async function carregarEquip() {
+    // Inicializa mapa ao abrir a aba (mesmo sem busca)
+    carregarEquipLeaflet(() => {
+      initEquipMapa();
+      if (equipMap) setTimeout(() => equipMap.invalidateSize(), 100);
+    });
+    if (equipCarregado) return;
+    const status = document.getElementById('equip-status');
+    try {
+      const url = `${BASE_URL}/values/${encodeURIComponent(EQUIP_ABA)}!A:U?key=${API_KEY}`;
+      const res = await fetch(url);
+      const json = await res.json();
+      const rows = (json.values || []).slice(1);
+
+      // 1º bloco: A(0) B(1) C(2) D(3) E(4) F(5) G(6)
+      const bloco1 = rows.map(r => ({
+        alimentador: (r[0] || '').trim(),
+        icone:       (r[2] || '').trim(),
+        nome:        (r[3] || '').trim(),
+        tipo:        (r[4] || '').trim(),
+        lat:         (r[5] || '').trim(),
+        lng:         (r[6] || '').trim(),
+      })).filter(r => r.nome);
+
+      // 2º bloco: I(8)=alim J(9)=icone K(10)=nome L(11)=tipo M(12)=lat N(13)=lng
+      const bloco2 = rows.map(r => ({
+        alimentador: (r[8]  || '').trim(),
+        icone:       (r[9]  || '').trim(),
+        nome:        (r[10] || '').trim(),
+        tipo:        (r[11] || '').trim(),
+        lat:         (r[12] || '').trim(),
+        lng:         (r[13] || '').trim(),
+      })).filter(r => r.nome);
+
+      // 3º bloco: P(15)=alim Q(16)=icone R(17)=nome S(18)=tipo T(19)=lat U(20)=lng
+      const bloco3 = rows.map(r => ({
+        alimentador: (r[15] || '').trim(),
+        icone:       (r[16] || '').trim(),
+        nome:        (r[17] || '').trim(),
+        tipo:        (r[18] || '').trim(),
+        lat:         (r[19] || '').trim(),
+        lng:         (r[20] || '').trim(),
+      })).filter(r => r.nome);
+
+      equipDados = [...bloco1, ...bloco2, ...bloco3];
+      equipCarregado = true;
+      status.textContent = `${equipDados.length} equipamentos carregados. Digite para buscar.`;
+      status.className = 'mapa-status ok';
+    } catch(e) {
+      status.textContent = 'Erro ao carregar equipamentos.';
+      status.className = 'mapa-status erro';
+    }
+  }
+
+  window.equipFiltrar = function() {
+    const val = (document.getElementById('equip-input').value || '').trim().toUpperCase();
+    const dd = document.getElementById('equip-dropdown');
+    document.getElementById('equip-card').classList.remove('visible');
+    document.getElementById('equip-tabela-wrap').style.display = 'none';
+    if (!val || val.length < 2) { dd.style.display = 'none'; return; }
+    const matches = equipDados.filter(e => e.nome.toUpperCase().includes(val)).slice(0, 12);
+    if (!matches.length) { dd.style.display = 'none'; return; }
+    dd.innerHTML = matches.map(e => {
+      const t = tipoLabel(e.icone);
+      return `<div onclick="equipSelecionar('${e.nome.replace(/'/g,"\\'")}','${e.alimentador.replace(/'/g,"\\'")}','${e.icone.replace(/'/g,"\\'")}','${e.tipo.replace(/'/g,"\\'")}','${e.lat}','${e.lng}')"
+        style="padding:0.5rem 0.9rem;cursor:pointer;border-bottom:1px solid var(--border);font-family:'DM Mono',monospace;font-size:0.8rem;display:flex;gap:0.6rem;align-items:center;"
+        onmouseover="this.style.background='rgba(0,230,118,0.08)'" onmouseout="this.style.background=''">
+        <span>${t.emoji}</span>
+        <span style="color:var(--accent);font-weight:700;">${e.nome}</span>
+        <span style="color:var(--muted);font-size:0.72rem;">${e.alimentador} · ${t.label}</span>
+      </div>`;
+    }).join('');
+    dd.style.display = 'block';
+  };
+
+  window.equipSelecionar = function(nome, alim, icone, tipo, lat, lng) {
+    document.getElementById('equip-input').value = nome;
+    document.getElementById('equip-dropdown').style.display = 'none';
+    mostrarCard(nome, alim, icone, tipo, lat, lng);
+  };
+
+  window.equipBuscar = function() {
+    const val = (document.getElementById('equip-input').value || '').trim().toUpperCase();
+    document.getElementById('equip-dropdown').style.display = 'none';
+    document.getElementById('equip-card').classList.remove('visible');
+    document.getElementById('equip-tabela-wrap').style.display = 'none';
+    if (!val) return;
+    const matches = equipDados.filter(e => e.nome.toUpperCase().includes(val));
+    if (!matches.length) {
+      document.getElementById('equip-status').textContent = 'Nenhum equipamento encontrado.';
+      document.getElementById('equip-status').className = 'mapa-status erro';
+      return;
+    }
+    document.getElementById('equip-status').textContent = '';
+    document.getElementById('equip-status').className = 'mapa-status';
+    if (matches.length === 1) {
+      const e = matches[0];
+      mostrarCard(e.nome, e.alimentador, e.icone, e.tipo, e.lat, e.lng);
+    } else {
+      mostrarTabela(matches);
+    }
+  };
+
+  function mostrarCard(nome, alim, icone, tipo, lat, lng) {
+    const t = tipoLabel(icone);
+    document.getElementById('equip-num').textContent  = nome;
+    document.getElementById('equip-alim').textContent = alim || '—';
+    document.getElementById('equip-tipo').innerHTML   = `${t.emoji} ${t.label}`;
+    document.getElementById('equip-nome').textContent = tipo || '—';
+    document.getElementById('equip-card').classList.add('visible');
+    document.getElementById('equip-tabela-wrap').style.display = 'none';
+
+    const latN = parseFloat(String(lat).replace(',', '.'));
+    const lngN = parseFloat(String(lng).replace(',', '.'));
+    if (!isNaN(latN) && !isNaN(lngN) && latN !== 0 && lngN !== 0) {
+      if (equipMap) {
+        if (equipMarker) equipMap.removeLayer(equipMarker);
+        const popup = `<b style="font-family:'DM Mono',monospace;color:#00e676;">${t.emoji} ${nome}</b><br>${t.label}<br>${alim}<br>Lat: ${latN.toFixed(6)}<br>Lng: ${lngN.toFixed(6)}`;
+        equipMarker = L.marker([latN, lngN]).addTo(equipMap).bindPopup(popup).openPopup();
+        equipMap.setView([latN, lngN], 17);
+      }
+    }
+  }
+
+  function mostrarTabela(lista) {
+    const wrap = document.getElementById('equip-tabela-wrap');
+    wrap.innerHTML = `
+      <div style="font-family:'DM Mono',monospace;font-size:0.72rem;color:var(--muted);margin-bottom:0.5rem;">${lista.length} equipamentos encontrados:</div>
+      <div style="overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border);">
+        <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+          <thead>
+            <tr style="background:var(--surface);">
+              <th style="padding:0.6rem 0.9rem;text-align:left;font-family:'DM Mono',monospace;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);border-bottom:1px solid var(--border);">Número</th>
+              <th style="padding:0.6rem 0.9rem;text-align:left;font-family:'DM Mono',monospace;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);border-bottom:1px solid var(--border);">Alimentador</th>
+              <th style="padding:0.6rem 0.9rem;text-align:left;font-family:'DM Mono',monospace;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);border-bottom:1px solid var(--border);">Tipo</th>
+              <th style="padding:0.6rem 0.9rem;text-align:left;font-family:'DM Mono',monospace;font-size:0.65rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);border-bottom:1px solid var(--border);">Nome</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${lista.map(e => {
+              const t = tipoLabel(e.icone);
+              return `<tr style="border-bottom:1px solid var(--border);cursor:pointer;" onclick="equipSelecionar('${e.nome.replace(/'/g,"\\'")}','${e.alimentador.replace(/'/g,"\\'")}','${e.icone.replace(/'/g,"\\'")}','${e.tipo.replace(/'/g,"\\'")}','${e.lat}','${e.lng}')"
+                onmouseover="this.style.background='rgba(0,230,118,0.05)'" onmouseout="this.style.background=''">
+                <td style="padding:0.55rem 0.9rem;color:var(--accent);font-weight:700;">${e.nome}</td>
+                <td style="padding:0.55rem 0.9rem;">${e.alimentador || '—'}</td>
+                <td style="padding:0.55rem 0.9rem;">${t.emoji} ${t.label}</td>
+                <td style="padding:0.55rem 0.9rem;color:var(--muted);font-size:0.8rem;">${e.tipo || '—'}</td>
+              </tr>`;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>`;
+    wrap.style.display = 'block';
+    document.getElementById('equip-card').classList.remove('visible');
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (btn.dataset.tab === 'equipamentos') carregarEquip();
+      });
+    });
+    document.addEventListener('click', e => {
+      const dd = document.getElementById('equip-dropdown');
+      const inp = document.getElementById('equip-input');
+      if (dd && inp && !inp.contains(e.target) && !dd.contains(e.target)) {
+        dd.style.display = 'none';
+      }
+    });
+    const inp = document.getElementById('equip-input');
+    if (inp) inp.addEventListener('keydown', e => {
+      if (e.key === 'Enter') equipBuscar();
+      if (e.key === 'Escape') document.getElementById('equip-dropdown').style.display = 'none';
     });
   });
 })();
