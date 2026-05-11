@@ -43,6 +43,11 @@
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
         .nav-link.active { @apply text-brand-600 bg-brand-50 border-brand-200; }
+        
+        /* Modal Style */
+        .modal { display: none; position: fixed; inset: 0; z-index: 100; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); align-items: center; justify-content: center; }
+        .modal.active { display: flex; animation: modalIn 0.3s ease; }
+        @keyframes modalIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
     </style>
 </head>
 <body class="text-slate-900">
@@ -201,6 +206,56 @@
         </div>
     </div>
 
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="bg-white w-full max-w-lg rounded-[32px] card-shadow p-8 m-4 relative max-h-[90vh] overflow-y-auto custom-scrollbar">
+            <button onclick="closeEditModal()" class="absolute top-6 right-6 text-slate-400 hover:text-slate-900 font-black">FECHAR</button>
+            <h2 class="text-xl font-black mb-6 flex items-center"><span class="w-1 h-5 bg-brand-500 rounded-full mr-2"></span>Editar Demanda</h2>
+            <form id="editForm" class="space-y-4">
+                <input type="hidden" id="editId">
+                <div class="grid grid-cols-1 gap-3">
+                    <label class="text-[10px] font-black text-slate-400 uppercase">Título</label>
+                    <input type="text" id="editTitle" required class="w-full px-4 py-3 bg-slate-50 border-none rounded-xl text-xs font-semibold outline-none focus:ring-2 focus:ring-brand-500">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-black text-slate-400 uppercase">Status</label>
+                        <select id="editStatus" class="w-full px-4 py-3 bg-slate-50 border-none rounded-xl text-xs font-semibold outline-none">
+                            <option value="Ativa">Ativa</option><option value="Pendente">Pendente</option><option value="Concluída">Concluída</option>
+                        </select>
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-black text-slate-400 uppercase">Prioridade</label>
+                        <select id="editPriority" class="w-full px-4 py-3 bg-slate-50 border-none rounded-xl text-xs font-semibold outline-none">
+                            <option value="Baixa">Baixa</option><option value="Média">Média</option><option value="Alta">Alta</option><option value="Crítica">Crítica</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-black text-slate-400 uppercase">Real (h)</label>
+                        <input type="number" id="editRealDuration" step="0.1" class="w-full px-4 py-3 bg-slate-50 border-none rounded-xl text-xs font-semibold outline-none">
+                    </div>
+                    <div class="space-y-1">
+                        <label class="text-[10px] font-black text-slate-400 uppercase">Categoria</label>
+                        <select id="editCategory" class="w-full px-4 py-3 bg-slate-50 border-none rounded-xl text-xs font-semibold outline-none">
+                            <option value="Suporte">Suporte</option><option value="Dev">Dev</option><option value="Infra">Infra</option><option value="Comercial">Comercial</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="space-y-2">
+                    <label class="text-[10px] font-black text-slate-400 uppercase">Anexos (Links)</label>
+                    <div id="attachmentsList" class="space-y-2"></div>
+                    <div class="flex gap-2">
+                        <input type="text" id="newAttachment" placeholder="URL do anexo" class="flex-1 px-4 py-3 bg-slate-50 border-none rounded-xl text-xs font-semibold outline-none">
+                        <button type="button" onclick="addAttachment()" class="px-4 py-3 bg-slate-900 text-white rounded-xl text-[10px] font-black">ADICIONAR</button>
+                    </div>
+                </div>
+                <button type="submit" class="w-full bg-brand-500 text-white font-black py-4 rounded-xl hover:bg-brand-600 transition-all mt-4 shadow-lg shadow-brand-100">ATUALIZAR DADOS</button>
+            </form>
+        </div>
+    </div>
+    
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 
@@ -283,7 +338,8 @@
                 lat: parseFloat(document.getElementById('lat').value),
                 lng: parseFloat(document.getElementById('lng').value),
                 est_duration: parseFloat(document.getElementById('est_duration').value),
-                real_duration: parseFloat(document.getElementById('real_duration').value) || 0
+                real_duration: parseFloat(document.getElementById('real_duration').value) || 0,
+                attachments: []
             });
             localStorage.setItem('demandflow_ultimate_v1', JSON.stringify(demands));
             renderTable(); updateMap(); this.reset();
@@ -295,22 +351,108 @@
             demands.forEach(d => {
                 const diff = d.real_duration ? (d.real_duration - d.est_duration).toFixed(1) : '-';
                 const diffColor = d.real_duration > d.est_duration ? 'text-red-500' : 'text-brand-600';
+                const attachmentsCount = d.attachments ? d.attachments.length : 0;
                 tbody.innerHTML += `
                     <tr class="hover:bg-slate-50/50 transition-colors">
-                        <td class="px-6 py-4"><div class="font-bold text-xs">${d.title}</div><div class="text-[9px] font-black text-slate-400 uppercase">${d.requester}</div></td>
+                        <td class="px-6 py-4">
+                            <div class="font-bold text-xs">${d.title}</div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[9px] font-black text-slate-400 uppercase">${d.requester}</span>
+                                ${attachmentsCount > 0 ? `<span class="text-[9px] bg-slate-100 px-1.5 py-0.5 rounded text-slate-500">📎 ${attachmentsCount}</span>` : ''}
+                            </div>
+                        </td>
                         <td class="px-6 py-4"><span class="status-pill ${d.status === 'Concluída' ? 'bg-slate-800 text-white' : 'bg-brand-100 text-brand-700'}">${d.status}</span></td>
                         <td class="px-6 py-4"><span class="status-pill ${d.priority === 'Crítica' ? 'bg-red-100 text-red-600' : 'bg-slate-100'}">${d.priority}</span></td>
                         <td class="px-6 py-4 text-xs font-bold">${d.est_duration}h / <span class="${diffColor}">${d.real_duration}h</span></td>
-                        <td class="px-6 py-4 text-right"><button onclick="deleteDemand(${d.id})" class="text-slate-300 hover:text-red-500">EXCLUIR</button></td>
+                        <td class="px-6 py-4 text-right space-x-4">
+                            <button onclick="openEditModal(${d.id})" class="text-brand-600 hover:text-brand-700 font-black text-[9px]">EDITAR</button>
+                            <button onclick="deleteDemand(${d.id})" class="text-slate-300 hover:text-red-500 font-black text-[9px]">EXCLUIR</button>
+                        </td>
                     </tr>`;
             });
         }
 
         function deleteDemand(id) {
+            if(!confirm('Deseja realmente excluir esta demanda?')) return;
             demands = demands.filter(d => d.id !== id);
             localStorage.setItem('demandflow_ultimate_v1', JSON.stringify(demands));
             renderTable(); updateMap();
         }
+
+        // Edit Logic
+        let currentEditingAttachments = [];
+
+        function openEditModal(id) {
+            const d = demands.find(item => item.id === id);
+            if (!d) return;
+
+            document.getElementById('editId').value = d.id;
+            document.getElementById('editTitle').value = d.title;
+            document.getElementById('editStatus').value = d.status;
+            document.getElementById('editPriority').value = d.priority;
+            document.getElementById('editCategory').value = d.category;
+            document.getElementById('editRealDuration').value = d.real_duration;
+            
+            currentEditingAttachments = [...(d.attachments || [])];
+            renderAttachments();
+            
+            document.getElementById('editModal').classList.add('active');
+        }
+
+        function closeEditModal() {
+            document.getElementById('editModal').classList.remove('active');
+        }
+
+        function renderAttachments() {
+            const list = document.getElementById('attachmentsList');
+            list.innerHTML = '';
+            currentEditingAttachments.forEach((url, index) => {
+                list.innerHTML += `
+                    <div class="flex items-center justify-between bg-slate-50 p-3 rounded-xl">
+                        <a href="${url}" target="_blank" class="text-[10px] font-bold text-brand-600 truncate max-w-[200px]">${url}</a>
+                        <button type="button" onclick="removeAttachment(${index})" class="text-red-500 font-black text-[9px]">REMOVER</button>
+                    </div>`;
+            });
+        }
+
+        function addAttachment() {
+            const input = document.getElementById('newAttachment');
+            const url = input.value.trim();
+            if (url) {
+                currentEditingAttachments.push(url);
+                input.value = '';
+                renderAttachments();
+            }
+        }
+
+        function removeAttachment(index) {
+            currentEditingAttachments.splice(index, 1);
+            renderAttachments();
+        }
+
+        document.getElementById('editForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const id = parseInt(document.getElementById('editId').value);
+            const index = demands.findIndex(d => d.id === id);
+            
+            if (index !== -1) {
+                demands[index] = {
+                    ...demands[index],
+                    title: document.getElementById('editTitle').value,
+                    status: document.getElementById('editStatus').value,
+                    priority: document.getElementById('editPriority').value,
+                    category: document.getElementById('editCategory').value,
+                    real_duration: parseFloat(document.getElementById('editRealDuration').value) || 0,
+                    attachments: currentEditingAttachments
+                };
+                
+                localStorage.setItem('demandflow_ultimate_v1', JSON.stringify(demands));
+                renderTable();
+                updateMap();
+                closeEditModal();
+                if (typeof showToast === 'function') showToast('Demanda atualizada!', 'success');
+            }
+        });
 
         function updateDashboard() {
             if (!demands.length) return;
