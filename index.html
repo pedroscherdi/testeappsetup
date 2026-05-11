@@ -3,17 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DemandFlow Pro | Login</title>
+    <title>DemandFlow Ultimate | Strategic Dashboard</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#10b981">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="https://files.manuscdn.com/user_upload_by_module/session_file/310519663595675418/xTeUbGKrctTPOwWH.png">
-
     <link rel="icon" type="image/png" href="https://files.manuscdn.com/user_upload_by_module/session_file/310519663595675418/xTeUbGKrctTPOwWH.png">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
@@ -25,9 +21,7 @@
             theme: {
                 extend: {
                     fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
-                    colors: {
-                        brand: { 50: '#f0fdf4', 100: '#dcfce7', 500: '#10b981', 600: '#059669', 700: '#047857' }
-                    }
+                    colors: { brand: { 50: '#f0fdf4', 100: '#dcfce7', 500: '#10b981', 600: '#059669', 700: '#047857' } }
                 }
             }
         }
@@ -35,189 +29,116 @@
 
     <style>
         body { background-color: #f8fafc; -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
-        #map { height: 450px; width: 100%; border-radius: 24px; z-index: 1; }
+        #map { height: 500px; width: 100%; border-radius: 24px; z-index: 1; }
         .card-shadow { box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05); }
         .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
-        .chart-container { position: relative; height: 220px; }
+        .chart-container { position: relative; height: 280px; }
         .status-pill { @apply px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider; }
         
-        #loginScreen {
-            position: fixed;
-            inset: 0;
-            z-index: 9999;
-            background: #f8fafc;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-        }
+        #loginScreen { position: fixed; inset: 0; z-index: 9999; background: #f8fafc; display: flex; align-items: center; justify-content: center; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         
-        .login-card {
-            width: 100%;
-            max-width: 400px;
-            padding: 2.5rem;
-            background: white;
-            border-radius: 2.5rem;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08);
-        }
-
-        .hidden-app { opacity: 0; pointer-events: none; transform: scale(0.95); }
-        .visible-app { opacity: 1; pointer-events: auto; transform: scale(1); transition: all 0.5s ease; }
+        .nav-link.active { @apply text-brand-600 bg-brand-50 border-brand-200; }
     </style>
 </head>
 <body class="text-slate-900">
 
-    <!-- Tela de Login -->
+    <!-- Login Screen -->
     <div id="loginScreen">
-        <div class="login-card text-center space-y-8">
-            <div class="flex flex-col items-center space-y-4">
-                <div class="bg-brand-500 p-4 rounded-3xl shadow-xl shadow-brand-100">
-                    <img src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663595675418/xTeUbGKrctTPOwWH.png" class="w-12 h-12 brightness-0 invert" alt="Logo">
-                </div>
-                <div>
-                    <h2 class="text-2xl font-black text-slate-800 tracking-tight">Bem-vindo de volta</h2>
-                    <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mt-1">Acesse o DemandFlow Pro</p>
-                </div>
+        <div class="bg-white p-10 rounded-[3rem] card-shadow w-full max-width-[400px] text-center space-y-8 m-4 max-w-md">
+            <div class="bg-brand-500 p-4 rounded-3xl shadow-xl shadow-brand-100 inline-block">
+                <img src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663595675418/xTeUbGKrctTPOwWH.png" class="w-12 h-12 brightness-0 invert" alt="Logo">
             </div>
-
+            <h2 class="text-2xl font-black text-slate-800">Acesso Restrito</h2>
             <form id="loginForm" class="space-y-4 text-left">
-                <div class="space-y-1">
-                    <label class="text-[10px] font-black text-slate-400 ml-1 uppercase tracking-wider">Usuário</label>
-                    <input type="text" id="username" placeholder="Digite seu usuário" required class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-brand-500 outline-none text-sm font-semibold transition-all">
-                </div>
-                <div class="space-y-1">
-                    <label class="text-[10px] font-black text-slate-400 ml-1 uppercase tracking-wider">Senha</label>
-                    <input type="password" id="password" placeholder="••••••••" required class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-brand-500 outline-none text-sm font-semibold transition-all">
-                </div>
-                <button type="submit" class="w-full bg-slate-900 text-white font-black py-4 rounded-2xl hover:bg-brand-600 shadow-xl shadow-slate-100 transition-all active:scale-[0.98] mt-4">
-                    ENTRAR NO SISTEMA
-                </button>
+                <input type="text" id="username" placeholder="Usuário" required class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-brand-500 outline-none text-sm font-semibold">
+                <input type="password" id="password" placeholder="Senha" required class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-brand-500 outline-none text-sm font-semibold">
+                <button type="submit" class="w-full bg-slate-900 text-white font-black py-4 rounded-2xl hover:bg-brand-600 transition-all">ENTRAR</button>
             </form>
-            
-            <p id="loginError" class="text-red-500 text-[10px] font-bold uppercase hidden">Credenciais incorretas. Tente novamente.</p>
-            
-            <p class="text-[10px] text-slate-300 font-medium">Esqueceu sua senha? Contate o administrador.</p>
+            <p id="loginError" class="text-red-500 text-[10px] font-bold uppercase hidden">Credenciais Inválidas</p>
         </div>
     </div>
 
-    <!-- Aplicação Principal (Inicialmente Oculta) -->
-    <div id="mainApp" class="hidden-app min-h-screen flex flex-col">
-        <!-- Header -->
-        <header class="bg-white/90 backdrop-blur-md border-b border-slate-100 px-6 py-4 sticky top-0 z-50">
+    <!-- Main App -->
+    <div id="mainApp" class="hidden opacity-0 min-h-screen flex flex-col">
+        <!-- Navbar -->
+        <nav class="bg-white/90 backdrop-blur-md border-b border-slate-100 px-6 py-4 sticky top-0 z-50">
             <div class="container mx-auto flex justify-between items-center">
-                <div class="flex items-center space-x-3">
-                    <div class="bg-brand-500 p-1.5 rounded-lg">
-                        <img src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663595675418/xTeUbGKrctTPOwWH.png" class="w-5 h-5 brightness-0 invert" alt="Logo">
+                <div class="flex items-center space-x-8">
+                    <div class="flex items-center space-x-2">
+                        <img src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663595675418/xTeUbGKrctTPOwWH.png" class="w-6 h-6" alt="Logo">
+                        <span class="font-black text-lg tracking-tighter">DemandFlow</span>
                     </div>
-                    <h1 class="text-lg font-black tracking-tight text-slate-800">DemandFlow <span class="text-brand-500">Pro</span></h1>
+                    <div class="hidden md:flex space-x-2">
+                        <button onclick="switchTab('operacional')" class="nav-link active px-4 py-2 rounded-xl text-xs font-black transition-all border border-transparent">OPERACIONAL</button>
+                        <button onclick="switchTab('dashboard')" class="nav-link px-4 py-2 rounded-xl text-xs font-black transition-all border border-transparent">DASHBOARD</button>
+                    </div>
                 </div>
-                <div class="flex items-center space-x-4">
-                    <div id="currentTime" class="text-[10px] font-bold text-slate-400 bg-slate-50 px-3 py-1.5 rounded-full border border-slate-100 hidden md:block"></div>
-                    <button onclick="logout()" class="text-[10px] font-black text-slate-400 hover:text-red-500 transition-colors uppercase tracking-widest">Sair</button>
-                </div>
+                <button onclick="logout()" class="text-[10px] font-black text-slate-400 hover:text-red-500 uppercase tracking-widest">Sair</button>
             </div>
-        </header>
+        </nav>
 
-        <main class="container mx-auto p-4 md:p-8 flex-grow space-y-8">
-            <!-- Stats Grid -->
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div class="bg-white p-5 rounded-3xl card-shadow border border-slate-50">
-                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Ativas</p>
-                    <p id="statActive" class="text-2xl font-black text-slate-800">0</p>
-                </div>
-                <div class="bg-white p-5 rounded-3xl card-shadow border border-slate-50">
-                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Críticas</p>
-                    <p id="statHigh" class="text-2xl font-black text-red-600">0</p>
-                </div>
-                <div class="bg-white p-5 rounded-3xl card-shadow border border-slate-50">
-                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Horas</p>
-                    <p id="statTotalTime" class="text-2xl font-black text-slate-800">0h</p>
-                </div>
-                <div class="bg-white p-5 rounded-3xl card-shadow border border-slate-50">
-                    <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Usuários</p>
-                    <p id="statUsers" class="text-2xl font-black text-slate-800">0</p>
-                </div>
-            </div>
-
+        <!-- Tab: Operacional -->
+        <div id="operacional" class="tab-content active container mx-auto p-6 space-y-8">
             <div class="grid grid-cols-1 xl:grid-cols-12 gap-8">
                 <!-- Formulário -->
                 <div class="xl:col-span-4">
-                    <div class="bg-white p-6 rounded-[32px] card-shadow border border-slate-50">
-                        <h2 class="text-lg font-black mb-6 text-slate-800 flex items-center">
-                            <span class="w-1 h-5 bg-brand-500 rounded-full mr-2"></span>
-                            Nova Demanda
-                        </h2>
+                    <div class="bg-white p-8 rounded-[32px] card-shadow border border-slate-50">
+                        <h2 class="text-lg font-black mb-6 flex items-center"><span class="w-1 h-5 bg-brand-500 rounded-full mr-2"></span>Nova Demanda</h2>
                         <form id="demandForm" class="space-y-4">
                             <div class="grid grid-cols-2 gap-3">
-                                <input type="text" id="title" placeholder="Título..." required class="w-full px-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-brand-500 outline-none text-xs font-semibold">
-                                <input type="text" id="requester" placeholder="Solicitante..." required class="w-full px-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-brand-500 outline-none text-xs font-semibold">
+                                <input type="text" id="title" placeholder="Título" required class="w-full px-4 py-3 bg-slate-50 border-none rounded-xl text-xs font-semibold outline-none focus:ring-2 focus:ring-brand-500">
+                                <input type="text" id="requester" placeholder="Solicitante" required class="w-full px-4 py-3 bg-slate-50 border-none rounded-xl text-xs font-semibold outline-none focus:ring-2 focus:ring-brand-500">
                             </div>
                             <div class="grid grid-cols-2 gap-3">
-                                <select id="priority" class="w-full px-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-brand-500 outline-none text-xs font-semibold">
-                                    <option value="Baixa">Baixa</option>
-                                    <option value="Média" selected>Média</option>
-                                    <option value="Alta">Alta</option>
-                                    <option value="Crítica">Crítica</option>
+                                <select id="priority" class="w-full px-4 py-3 bg-slate-50 border-none rounded-xl text-xs font-semibold outline-none">
+                                    <option value="Baixa">Baixa</option><option value="Média" selected>Média</option><option value="Alta">Alta</option><option value="Crítica">Crítica</option>
                                 </select>
-                                <select id="category" class="w-full px-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-brand-500 outline-none text-xs font-semibold">
-                                    <option value="Suporte">Suporte</option>
-                                    <option value="Desenvolvimento">Dev</option>
-                                    <option value="Infraestrutura">Infra</option>
-                                    <option value="Comercial">Comercial</option>
-                                    <option value="Outros">Outros</option>
+                                <select id="category" class="w-full px-4 py-3 bg-slate-50 border-none rounded-xl text-xs font-semibold outline-none">
+                                    <option value="Suporte">Suporte</option><option value="Dev">Dev</option><option value="Infra">Infra</option><option value="Comercial">Comercial</option>
                                 </select>
                             </div>
                             <div class="grid grid-cols-2 gap-3">
-                                <input type="number" id="lat" step="any" placeholder="Lat" required class="w-full px-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-brand-500 outline-none text-xs font-semibold">
-                                <input type="number" id="lng" step="any" placeholder="Lng" required class="w-full px-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-brand-500 outline-none text-xs font-semibold">
+                                <input type="number" id="lat" step="any" placeholder="Lat" required class="w-full px-4 py-3 bg-slate-50 border-none rounded-xl text-xs font-semibold outline-none">
+                                <input type="number" id="lng" step="any" placeholder="Lng" required class="w-full px-4 py-3 bg-slate-50 border-none rounded-xl text-xs font-semibold outline-none">
                             </div>
                             <div class="grid grid-cols-2 gap-3">
-                                <input type="number" id="duration" step="0.1" placeholder="Horas" required class="w-full px-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-brand-500 outline-none text-xs font-semibold">
-                                <select id="status" class="w-full px-4 py-3 bg-slate-50 border-none rounded-xl focus:ring-2 focus:ring-brand-500 outline-none text-xs font-semibold">
-                                    <option value="Ativa" selected>Ativa</option>
-                                    <option value="Pendente">Pendente</option>
-                                    <option value="Concluída">Concluída</option>
-                                </select>
+                                <input type="number" id="est_duration" step="0.1" placeholder="Estimado (h)" required class="w-full px-4 py-3 bg-slate-50 border-none rounded-xl text-xs font-semibold outline-none">
+                                <input type="number" id="real_duration" step="0.1" placeholder="Real (h)" class="w-full px-4 py-3 bg-slate-50 border-none rounded-xl text-xs font-semibold outline-none">
                             </div>
-                            <button type="submit" class="w-full bg-slate-900 text-white font-black py-3.5 rounded-xl hover:bg-brand-600 transition-all active:scale-[0.98]">
-                                SALVAR
-                            </button>
+                            <select id="status" class="w-full px-4 py-3 bg-slate-50 border-none rounded-xl text-xs font-semibold outline-none">
+                                <option value="Ativa">Ativa</option><option value="Pendente">Pendente</option><option value="Concluída">Concluída</option>
+                            </select>
+                            <button type="submit" class="w-full bg-slate-900 text-white font-black py-4 rounded-xl hover:bg-brand-600 transition-all">SALVAR DEMANDA</button>
                         </form>
                     </div>
                 </div>
-
                 <!-- Mapa -->
                 <div class="xl:col-span-8">
                     <div class="bg-white p-2 rounded-[32px] card-shadow border border-slate-50 overflow-hidden">
-                        <div class="flex justify-between items-center p-4">
-                            <h2 class="font-black text-slate-800 text-sm">Mapa Operacional</h2>
-                            <div class="flex bg-slate-100 p-1 rounded-xl">
-                                <button onclick="toggleHeatmap(false)" id="btnPins" class="px-4 py-1.5 text-[9px] font-black rounded-lg transition-all bg-white shadow-sm text-slate-800">PINS</button>
-                                <button onclick="toggleHeatmap(true)" id="btnHeat" class="px-4 py-1.5 text-[9px] font-black rounded-lg transition-all text-slate-400">CALOR</button>
-                            </div>
-                        </div>
                         <div id="map"></div>
                     </div>
                 </div>
-
                 <!-- Tabela -->
                 <div class="xl:col-span-12">
                     <div class="bg-white rounded-[32px] card-shadow border border-slate-50 overflow-hidden">
                         <div class="p-6 border-b border-slate-50 flex justify-between items-center">
-                            <h2 class="text-lg font-black text-slate-800">Painel de Demandas</h2>
+                            <h2 class="text-lg font-black">Histórico Operacional</h2>
                             <button onclick="exportData()" class="text-[10px] font-black text-brand-600">EXPORTAR CSV</button>
                         </div>
                         <div class="overflow-x-auto custom-scrollbar">
                             <table class="w-full text-left border-collapse">
                                 <thead>
                                     <tr class="bg-slate-50/50">
-                                        <th class="px-6 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest">Demanda</th>
-                                        <th class="px-6 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest">Status</th>
-                                        <th class="px-6 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest">Prioridade</th>
-                                        <th class="px-6 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest">Tempo</th>
-                                        <th class="px-6 py-4 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">Ações</th>
+                                        <th class="px-6 py-4 text-[9px] font-black text-slate-400 uppercase">Demanda</th>
+                                        <th class="px-6 py-4 text-[9px] font-black text-slate-400 uppercase">Status</th>
+                                        <th class="px-6 py-4 text-[9px] font-black text-slate-400 uppercase">Prioridade</th>
+                                        <th class="px-6 py-4 text-[9px] font-black text-slate-400 uppercase">Est. vs Real</th>
+                                        <th class="px-6 py-4 text-[9px] font-black text-slate-400 uppercase text-right">Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody id="demandTableBody" class="divide-y divide-slate-50"></tbody>
@@ -226,82 +147,112 @@
                     </div>
                 </div>
             </div>
-        </main>
+        </div>
+
+        <!-- Tab: Dashboard -->
+        <div id="dashboard" class="tab-content container mx-auto p-6 space-y-8">
+            <!-- Key Metrics -->
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div class="bg-white p-6 rounded-3xl card-shadow border border-slate-50">
+                    <p class="text-[10px] font-black text-slate-400 uppercase mb-1">Eficiência Média</p>
+                    <p id="dashEfficiency" class="text-3xl font-black text-brand-600">0%</p>
+                    <p class="text-[9px] text-slate-400 font-bold mt-1">Real vs Estimado</p>
+                </div>
+                <div class="bg-white p-6 rounded-3xl card-shadow border border-slate-50">
+                    <p class="text-[10px] font-black text-slate-400 uppercase mb-1">Dia de Pico</p>
+                    <p id="dashPeakDay" class="text-xl font-black text-slate-800">-</p>
+                    <p id="dashPeakCount" class="text-[9px] text-slate-400 font-bold mt-1">0 demandas</p>
+                </div>
+                <div class="bg-white p-6 rounded-3xl card-shadow border border-slate-50">
+                    <p class="text-[10px] font-black text-slate-400 uppercase mb-1">Maior Solicitante</p>
+                    <p id="dashTopUser" class="text-xl font-black text-slate-800">-</p>
+                    <p id="dashTopUserTime" class="text-[9px] text-slate-400 font-bold mt-1">0h total</p>
+                </div>
+                <div class="bg-white p-6 rounded-3xl card-shadow border border-slate-50">
+                    <p class="text-[10px] font-black text-slate-400 uppercase mb-1">Concluídas</p>
+                    <p id="dashCompleted" class="text-3xl font-black text-slate-800">0</p>
+                    <p id="dashPending" class="text-[9px] text-slate-400 font-bold mt-1">0 pendentes</p>
+                </div>
+            </div>
+
+            <!-- Charts Row 1 -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="bg-white p-8 rounded-[32px] card-shadow border border-slate-50">
+                    <h2 class="text-sm font-black mb-6 uppercase tracking-widest">Demandas por Dia (Volume)</h2>
+                    <div class="chart-container"><canvas id="dailyChart"></canvas></div>
+                </div>
+                <div class="bg-white p-8 rounded-[32px] card-shadow border border-slate-50">
+                    <h2 class="text-sm font-black mb-6 uppercase tracking-widest">Tempo Estimado vs Real</h2>
+                    <div class="chart-container"><canvas id="efficiencyChart"></canvas></div>
+                </div>
+            </div>
+
+            <!-- Charts Row 2 -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="bg-white p-8 rounded-[32px] card-shadow border border-slate-50 lg:col-span-2">
+                    <h2 class="text-sm font-black mb-6 uppercase tracking-widest">Ranking de Solicitantes (Horas)</h2>
+                    <div class="chart-container"><canvas id="userRankingChart"></canvas></div>
+                </div>
+                <div class="bg-white p-8 rounded-[32px] card-shadow border border-slate-50">
+                    <h2 class="text-sm font-black mb-6 uppercase tracking-widest">Distribuição por Categoria</h2>
+                    <div class="chart-container"><canvas id="catDistributionChart"></canvas></div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 
     <script>
-        // Lógica de Autenticação
+        // Auth Logic
         const loginForm = document.getElementById('loginForm');
         const loginScreen = document.getElementById('loginScreen');
         const mainApp = document.getElementById('mainApp');
-        const loginError = document.getElementById('loginError');
-
-        // Credenciais Padrão (Podem ser alteradas pelo usuário)
-        const DEFAULT_USER = "admin";
-        const DEFAULT_PASS = "admin123";
-
+        
         loginForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            const user = document.getElementById('username').value;
-            const pass = document.getElementById('password').value;
-
-            if (user === DEFAULT_USER && pass === DEFAULT_PASS) {
+            if (document.getElementById('username').value === "admin" && document.getElementById('password').value === "admin123") {
                 sessionStorage.setItem('isLoggedIn', 'true');
                 showApp();
             } else {
-                loginError.classList.remove('hidden');
-                setTimeout(() => loginError.classList.add('hidden'), 3000);
+                document.getElementById('loginError').classList.remove('hidden');
             }
         });
 
         function showApp() {
-            loginScreen.style.opacity = '0';
-            loginScreen.style.pointerEvents = 'none';
-            mainApp.classList.remove('hidden-app');
-            mainApp.classList.add('visible-app');
+            loginScreen.style.display = 'none';
+            mainApp.classList.remove('hidden');
+            setTimeout(() => mainApp.style.opacity = '1', 50);
             initApp();
         }
 
-        function logout() {
-            sessionStorage.removeItem('isLoggedIn');
-            location.reload();
+        function logout() { sessionStorage.removeItem('isLoggedIn'); location.reload(); }
+
+        // Tab Logic
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            event.currentTarget.classList.add('active');
+            if (tabId === 'dashboard') updateDashboard();
+            if (tabId === 'operacional') setTimeout(() => map.invalidateSize(), 100);
         }
 
-        // Verificar login ao carregar
-        window.onload = () => {
-            if (sessionStorage.getItem('isLoggedIn') === 'true') {
-                showApp();
-            }
-        };
-
         // App Logic
-        let demands = JSON.parse(localStorage.getItem('demandflow_pwa_v2')) || [];
-        let map, markerLayer, heatLayer, userChart, categoryChart;
-        let isHeatmapActive = false;
-
-        const priorityColors = { 'Baixa': 'bg-slate-100 text-slate-600', 'Média': 'bg-blue-100 text-blue-600', 'Alta': 'bg-orange-100 text-orange-600', 'Crítica': 'bg-red-100 text-red-600' };
-        const statusColors = { 'Ativa': 'bg-brand-100 text-brand-700', 'Pendente': 'bg-amber-100 text-amber-700', 'Concluída': 'bg-slate-800 text-white' };
+        let demands = JSON.parse(localStorage.getItem('demandflow_ultimate_v1')) || [];
+        let map, markerLayer, charts = {};
 
         function initApp() {
             initMap();
             renderTable();
-            updateStats();
-            // Iniciar relógio
-            setInterval(() => {
-                const now = new Date();
-                const timeStr = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) + ' • ' + now.toLocaleDateString('pt-BR');
-                const el = document.getElementById('currentTime');
-                if (el) el.innerText = timeStr;
-            }, 1000);
+            if (sessionStorage.getItem('isLoggedIn') === 'true') {
+                if (document.getElementById('dashboard').classList.contains('active')) updateDashboard();
+            }
         }
 
         function initMap() {
-            if (map) return;
             map = L.map('map', { zoomControl: false }).setView([-23.5505, -46.6333], 12);
-            L.control.zoom({ position: 'bottomright' }).addTo(map);
             L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
             markerLayer = L.layerGroup().addTo(map);
             map.on('click', (e) => {
@@ -312,36 +263,18 @@
         }
 
         function updateMap() {
-            if (!markerLayer) return;
             markerLayer.clearLayers();
-            if (heatLayer) map.removeLayer(heatLayer);
-            if (isHeatmapActive) {
-                const heatData = demands.map(d => [d.lat, d.lng, d.duration]);
-                heatLayer = L.heatLayer(heatData, { radius: 30, blur: 20, max: 1.0 }).addTo(map);
-            } else {
-                demands.forEach(d => {
-                    const color = d.priority === 'Crítica' ? '#ef4444' : d.priority === 'Alta' ? '#f59e0b' : '#10b981';
-                    const customIcon = L.divIcon({
-                        className: 'custom-icon',
-                        html: `<div style="background-color: ${color}; width: 12px; height: 12px; border-radius: 50%; border: 2px solid white;"></div>`,
-                        iconSize: [12, 12], iconAnchor: [6, 6]
-                    });
-                    L.marker([d.lat, d.lng], { icon: customIcon }).bindPopup(`<b class="text-xs">${d.title}</b>`).addTo(markerLayer);
-                });
-            }
-        }
-
-        function toggleHeatmap(active) {
-            isHeatmapActive = active;
-            document.getElementById('btnPins').className = active ? "px-4 py-1.5 text-[9px] font-black rounded-lg transition-all text-slate-400" : "px-4 py-1.5 text-[9px] font-black rounded-lg transition-all bg-white shadow-sm text-slate-800";
-            document.getElementById('btnHeat').className = active ? "px-4 py-1.5 text-[9px] font-black rounded-lg transition-all bg-white shadow-sm text-slate-800" : "px-4 py-1.5 text-[9px] font-black rounded-lg transition-all text-slate-400";
-            updateMap();
+            demands.forEach(d => {
+                const color = d.priority === 'Crítica' ? '#ef4444' : d.priority === 'Alta' ? '#f59e0b' : '#10b981';
+                L.circleMarker([d.lat, d.lng], { radius: 6, color: color, fillOpacity: 0.8 }).bindPopup(`<b>${d.title}</b>`).addTo(markerLayer);
+            });
         }
 
         document.getElementById('demandForm').addEventListener('submit', function(e) {
             e.preventDefault();
             demands.push({
                 id: Date.now(),
+                date: new Date().toISOString().split('T')[0],
                 title: document.getElementById('title').value,
                 requester: document.getElementById('requester').value,
                 priority: document.getElementById('priority').value,
@@ -349,59 +282,104 @@
                 status: document.getElementById('status').value,
                 lat: parseFloat(document.getElementById('lat').value),
                 lng: parseFloat(document.getElementById('lng').value),
-                duration: parseFloat(document.getElementById('duration').value)
+                est_duration: parseFloat(document.getElementById('est_duration').value),
+                real_duration: parseFloat(document.getElementById('real_duration').value) || 0
             });
-            saveAndRefresh();
-            this.reset();
+            localStorage.setItem('demandflow_ultimate_v1', JSON.stringify(demands));
+            renderTable(); updateMap(); this.reset();
         });
-
-        function deleteDemand(id) {
-            demands = demands.filter(d => d.id !== id);
-            saveAndRefresh();
-        }
-
-        function saveAndRefresh() {
-            localStorage.setItem('demandflow_pwa_v2', JSON.stringify(demands));
-            renderTable(); updateMap(); updateStats();
-        }
-
-        function updateStats() {
-            document.getElementById('statActive').innerText = demands.filter(d => d.status === 'Ativa').length;
-            document.getElementById('statHigh').innerText = demands.filter(d => d.priority === 'Alta' || d.priority === 'Crítica').length;
-            document.getElementById('statTotalTime').innerText = demands.reduce((acc, d) => acc + d.duration, 0).toFixed(1) + 'h';
-            document.getElementById('statUsers').innerText = [...new Set(demands.map(d => d.requester))].length;
-        }
 
         function renderTable() {
             const tbody = document.getElementById('demandTableBody');
             tbody.innerHTML = '';
             demands.forEach(d => {
+                const diff = d.real_duration ? (d.real_duration - d.est_duration).toFixed(1) : '-';
+                const diffColor = d.real_duration > d.est_duration ? 'text-red-500' : 'text-brand-600';
                 tbody.innerHTML += `
                     <tr class="hover:bg-slate-50/50 transition-colors">
-                        <td class="px-6 py-4">
-                            <div class="font-bold text-slate-800 text-xs">${d.title}</div>
-                            <div class="text-[9px] font-black text-slate-400 uppercase">${d.requester}</div>
-                        </td>
-                        <td class="px-6 py-4"><span class="status-pill ${statusColors[d.status]}">${d.status}</span></td>
-                        <td class="px-6 py-4"><span class="status-pill ${priorityColors[d.priority]}">${d.priority}</span></td>
-                        <td class="px-6 py-4 font-black text-slate-700 text-xs">${d.duration}h</td>
-                        <td class="px-6 py-4 text-right">
-                            <button onclick="deleteDemand(${d.id})" class="text-slate-300 hover:text-red-500">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                            </button>
-                        </td>
+                        <td class="px-6 py-4"><div class="font-bold text-xs">${d.title}</div><div class="text-[9px] font-black text-slate-400 uppercase">${d.requester}</div></td>
+                        <td class="px-6 py-4"><span class="status-pill ${d.status === 'Concluída' ? 'bg-slate-800 text-white' : 'bg-brand-100 text-brand-700'}">${d.status}</span></td>
+                        <td class="px-6 py-4"><span class="status-pill ${d.priority === 'Crítica' ? 'bg-red-100 text-red-600' : 'bg-slate-100'}">${d.priority}</span></td>
+                        <td class="px-6 py-4 text-xs font-bold">${d.est_duration}h / <span class="${diffColor}">${d.real_duration}h</span></td>
+                        <td class="px-6 py-4 text-right"><button onclick="deleteDemand(${d.id})" class="text-slate-300 hover:text-red-500">EXCLUIR</button></td>
                     </tr>`;
             });
         }
 
-        function exportData() {
-            if (!demands.length) return;
-            let csv = 'Título,Solicitante,Prioridade,Categoria,Status,Lat,Lng,Tempo(h)\n';
-            demands.forEach(d => csv += `${d.title},${d.requester},${d.priority},${d.category},${d.status},${d.lat},${d.lng},${d.duration}\n`);
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a'); a.href = url; a.download = 'demandas_pwa.csv'; a.click();
+        function deleteDemand(id) {
+            demands = demands.filter(d => d.id !== id);
+            localStorage.setItem('demandflow_ultimate_v1', JSON.stringify(demands));
+            renderTable(); updateMap();
         }
+
+        function updateDashboard() {
+            if (!demands.length) return;
+
+            // Metrics
+            const completed = demands.filter(d => d.status === 'Concluída');
+            const totalEst = completed.reduce((acc, d) => acc + d.est_duration, 0);
+            const totalReal = completed.reduce((acc, d) => acc + d.real_duration, 0);
+            const efficiency = totalEst ? Math.round((totalEst / totalReal) * 100) : 0;
+            
+            document.getElementById('dashEfficiency').innerText = efficiency + '%';
+            document.getElementById('dashCompleted').innerText = completed.length;
+            document.getElementById('dashPending').innerText = demands.length - completed.length + ' pendentes';
+
+            const dailyCount = {};
+            demands.forEach(d => dailyCount[d.date] = (dailyCount[d.date] || 0) + 1);
+            const peakDay = Object.keys(dailyCount).reduce((a, b) => dailyCount[a] > dailyCount[b] ? a : b, '-');
+            document.getElementById('dashPeakDay').innerText = peakDay;
+            document.getElementById('dashPeakCount').innerText = (dailyCount[peakDay] || 0) + ' demandas';
+
+            const userTime = {};
+            demands.forEach(d => userTime[d.requester] = (userTime[d.requester] || 0) + d.real_duration);
+            const topUser = Object.keys(userTime).reduce((a, b) => userTime[a] > userTime[b] ? a : b, '-');
+            document.getElementById('dashTopUser').innerText = topUser;
+            document.getElementById('dashTopUserTime').innerText = (userTime[topUser] || 0).toFixed(1) + 'h total';
+
+            // Charts
+            renderCharts(dailyCount, completed, userTime);
+        }
+
+        function renderCharts(dailyCount, completed, userTime) {
+            // Daily Volume
+            if (charts.daily) charts.daily.destroy();
+            charts.daily = new Chart(document.getElementById('dailyChart'), {
+                type: 'line',
+                data: { labels: Object.keys(dailyCount), datasets: [{ label: 'Demandas', data: Object.values(dailyCount), borderColor: '#10b981', tension: 0.4, fill: true, backgroundColor: 'rgba(16, 185, 129, 0.05)' }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+
+            // Efficiency
+            if (charts.efficiency) charts.efficiency.destroy();
+            charts.efficiency = new Chart(document.getElementById('efficiencyChart'), {
+                type: 'bar',
+                data: { labels: completed.map(d => d.title.substring(0, 10)), datasets: [
+                    { label: 'Estimado', data: completed.map(d => d.est_duration), backgroundColor: '#e2e8f0', borderRadius: 5 },
+                    { label: 'Real', data: completed.map(d => d.real_duration), backgroundColor: '#10b981', borderRadius: 5 }
+                ]},
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+
+            // User Ranking
+            if (charts.user) charts.user.destroy();
+            charts.user = new Chart(document.getElementById('userRankingChart'), {
+                type: 'bar',
+                data: { labels: Object.keys(userTime), datasets: [{ data: Object.values(userTime), backgroundColor: '#0f172a', borderRadius: 10 }] },
+                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+            });
+
+            // Category
+            const catData = {}; demands.forEach(d => catData[d.category] = (catData[d.category] || 0) + 1);
+            if (charts.cat) charts.cat.destroy();
+            charts.cat = new Chart(document.getElementById('catDistributionChart'), {
+                type: 'doughnut',
+                data: { labels: Object.keys(catData), datasets: [{ data: Object.values(catData), backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444'] }] },
+                options: { responsive: true, maintainAspectRatio: false, cutout: '70%' }
+            });
+        }
+
+        window.onload = () => { if (sessionStorage.getItem('isLoggedIn') === 'true') showApp(); };
     </script>
 </body>
 </html>
