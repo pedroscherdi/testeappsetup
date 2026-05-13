@@ -1,527 +1,486 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DemandFlow Ultimate | Strategic Dashboard</title>
-    
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#10b981">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="icon" type="image/png" href="https://files.manuscdn.com/user_upload_by_module/session_file/310519663595675418/xTeUbGKrctTPOwWH.png">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seletor de Estruturas Dinâmico</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@600;700&display=swap');
 
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: { sans: ['"Plus Jakarta Sans"', 'sans-serif'] },
-                    colors: { brand: { 50: '#f0fdf4', 100: '#dcfce7', 500: '#10b981', 600: '#059669', 700: '#047857' } }
-                }
-            }
-        }
-    </script>
+  :root {
+    --bg: #060f0a;
+    --bg2: #0d1f15;
+    --bg3: #132a1c;
+    --accent: #00e676;
+    --accent2: #00c853;
+    --text: #e0f2e9;
+    --muted: #4a7a5a;
+    --border: #1e3d2a;
+  }
 
-    <style>
-        body { background-color: #f8fafc; -webkit-tap-highlight-color: transparent; overflow-x: hidden; }
-        #map { height: 500px; width: 100%; border-radius: 24px; z-index: 1; }
-        .card-shadow { box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05); }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
-        .chart-container { position: relative; height: 280px; }
-        .status-pill { @apply px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider; }
-        
-        #loginScreen { position: fixed; inset: 0; z-index: 9999; background: #f8fafc; display: flex; align-items: center; justify-content: center; }
-        .tab-content { display: none; }
-        .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        .nav-link.active { @apply text-brand-600 bg-brand-50 border-brand-200; }
-        
-        /* Modal Style */
-        .modal { display: none; position: fixed; inset: 0; z-index: 100; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); align-items: center; justify-content: center; }
-        .modal.active { display: flex; animation: modalIn 0.3s ease; }
-        @keyframes modalIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
-    </style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-height: 100vh;
+    padding: 32px 20px;
+  }
+
+  .header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 32px;
+  }
+
+  h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.1rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+
+  .btn-sync {
+    background: var(--bg3);
+    color: var(--accent);
+    border: 1px solid var(--border);
+    padding: 8px 16px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    transition: all 0.2s;
+  }
+
+  .btn-sync:hover { background: var(--accent); color: var(--bg); }
+
+  .selectors {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .selector-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  label {
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  select {
+    background: var(--bg2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 10px 12px;
+    font-family: 'DM Mono', monospace;
+    font-size: 0.8rem;
+    outline: none;
+    cursor: pointer;
+    transition: border-color 0.2s;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2300e676' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    padding-right: 32px;
+  }
+
+  select:hover, select:focus { border-color: var(--accent); }
+  select:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  .nome-box {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-height: 56px;
+  }
+
+  .nome-label {
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .nome-valor {
+    font-family: 'Syne', sans-serif;
+    font-size: 1rem;
+    color: var(--accent);
+    flex: 1;
+    text-align: right;
+  }
+
+  .nome-valor.vazio { color: var(--muted); font-size: 0.75rem; font-family: 'DM Mono', monospace; }
+
+  .tabela-wrap {
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+
+  .tabela-header {
+    background: var(--bg3);
+    padding: 10px 16px;
+    font-size: 0.6rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: grid;
+    grid-template-columns: 1fr 2.5fr auto;
+    gap: 16px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  thead { display: none; }
+
+  tbody tr {
+    display: grid;
+    grid-template-columns: 1fr 2.5fr auto;
+    gap: 16px;
+    padding: 10px 16px;
+    border-top: 1px solid var(--border);
+    align-items: center;
+    transition: background 0.15s;
+  }
+
+  tbody tr:hover { background: var(--bg2); }
+
+  td { font-size: 0.78rem; }
+  td:first-child { color: var(--muted); }
+  td:last-child {
+    color: var(--accent);
+    font-weight: 500;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  .empty-state {
+    padding: 40px 16px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+  }
+
+  .toggle-cnv {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    font-size: 0.72rem;
+    color: var(--muted);
+    cursor: pointer;
+    width: fit-content;
+    user-select: none;
+  }
+
+  .toggle-cnv input { accent-color: var(--accent); cursor: pointer; }
+  .toggle-cnv:hover { color: var(--text); }
+
+  .loading-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(6, 15, 10, 0.8);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    color: var(--accent);
+    font-size: 0.8rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    display: none;
+  }
+</style>
 </head>
-<body class="text-slate-900">
+<body>
 
-    <!-- Login Screen -->
-    <div id="loginScreen">
-        <div class="bg-white p-10 rounded-[3rem] card-shadow w-full max-width-[400px] text-center space-y-8 m-4 max-w-md">
-            <div class="bg-brand-500 p-4 rounded-3xl shadow-xl shadow-brand-100 inline-block">
-                <img src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663595675418/xTeUbGKrctTPOwWH.png" class="w-12 h-12 brightness-0 invert" alt="Logo">
-            </div>
-            <h2 class="text-2xl font-black text-slate-800">Acesso Restrito</h2>
-            <form id="loginForm" class="space-y-4 text-left">
-                <input type="text" id="username" placeholder="Usuário" required class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-brand-500 outline-none text-sm font-semibold">
-                <input type="password" id="password" placeholder="Senha" required class="w-full px-6 py-4 bg-slate-50 border-none rounded-2xl focus:ring-2 focus:ring-brand-500 outline-none text-sm font-semibold">
-                <button type="submit" class="w-full bg-slate-900 text-white font-black py-4 rounded-2xl hover:bg-brand-600 transition-all">ENTRAR</button>
-            </form>
-            <p id="loginError" class="text-red-500 text-[10px] font-bold uppercase hidden">Credenciais Inválidas</p>
-        </div>
-    </div>
+<div id="loading" class="loading-overlay">Sincronizando dados...</div>
 
-    <!-- Main App -->
-    <div id="mainApp" class="hidden opacity-0 min-h-screen flex flex-col">
-        <!-- Navbar -->
-        <nav class="bg-white/90 backdrop-blur-md border-b border-slate-100 px-6 py-4 sticky top-0 z-50">
-            <div class="container mx-auto flex justify-between items-center">
-                <div class="flex items-center space-x-8">
-                    <div class="flex items-center space-x-2">
-                        <img src="https://files.manuscdn.com/user_upload_by_module/session_file/310519663595675418/xTeUbGKrctTPOwWH.png" class="w-6 h-6" alt="Logo">
-                        <span class="font-black text-lg tracking-tighter">DemandFlow</span>
-                    </div>
-                    <div class="hidden md:flex space-x-2">
-                        <button onclick="switchTab('operacional')" class="nav-link active px-4 py-2 rounded-xl text-xs font-black transition-all border border-transparent">OPERACIONAL</button>
-                        <button onclick="switchTab('dashboard')" class="nav-link px-4 py-2 rounded-xl text-xs font-black transition-all border border-transparent">DASHBOARD</button>
-                    </div>
-                </div>
-                <button onclick="logout()" class="text-[10px] font-black text-slate-400 hover:text-red-500 uppercase tracking-widest">Sair</button>
-            </div>
-        </nav>
+<div class="header-container">
+  <h1>Seletor de Estruturas</h1>
+  <button class="btn-sync" onclick="carregarDados()">Atualizar Planilha</button>
+</div>
 
-        <!-- Tab: Operacional -->
-        <div id="operacional" class="tab-content active container mx-auto p-6 space-y-8">
-            <div class="grid grid-cols-1 xl:grid-cols-12 gap-8">
-                <!-- Formulário -->
-                <div class="xl:col-span-4">
-                    <div class="bg-white p-8 rounded-[32px] card-shadow border border-slate-50">
-                        <h2 class="text-lg font-black mb-6 flex items-center"><span class="w-1 h-5 bg-brand-500 rounded-full mr-2"></span>Nova Demanda</h2>
-                        <form id="demandForm" class="space-y-4">
-                            <div class="grid grid-cols-2 gap-3">
-                                <input type="text" id="title" placeholder="Título" required class="w-full px-4 py-3 bg-slate-50 border-none rounded-xl text-xs font-semibold outline-none focus:ring-2 focus:ring-brand-500">
-                                <input type="text" id="requester" placeholder="Solicitante" required class="w-full px-4 py-3 bg-slate-50 border-none rounded-xl text-xs font-semibold outline-none focus:ring-2 focus:ring-brand-500">
-                            </div>
-                            <div class="grid grid-cols-2 gap-3">
-                                <select id="priority" class="w-full px-4 py-3 bg-slate-50 border-none rounded-xl text-xs font-semibold outline-none">
-                                    <option value="Baixa">Baixa</option><option value="Média" selected>Média</option><option value="Alta">Alta</option><option value="Crítica">Crítica</option>
-                                </select>
-                                <select id="category" class="w-full px-4 py-3 bg-slate-50 border-none rounded-xl text-xs font-semibold outline-none">
-                                    <option value="Suporte">Suporte</option><option value="Dev">Dev</option><option value="Infra">Infra</option><option value="Comercial">Comercial</option>
-                                </select>
-                            </div>
-                            <div class="grid grid-cols-2 gap-3">
-                                <input type="number" id="lat" step="any" placeholder="Lat" required class="w-full px-4 py-3 bg-slate-50 border-none rounded-xl text-xs font-semibold outline-none">
-                                <input type="number" id="lng" step="any" placeholder="Lng" required class="w-full px-4 py-3 bg-slate-50 border-none rounded-xl text-xs font-semibold outline-none">
-                            </div>
-                            <div class="grid grid-cols-2 gap-3">
-                                <input type="number" id="est_duration" step="0.1" placeholder="Estimado (h)" required class="w-full px-4 py-3 bg-slate-50 border-none rounded-xl text-xs font-semibold outline-none">
-                                <input type="number" id="real_duration" step="0.1" placeholder="Real (h)" class="w-full px-4 py-3 bg-slate-50 border-none rounded-xl text-xs font-semibold outline-none">
-                            </div>
-                            <select id="status" class="w-full px-4 py-3 bg-slate-50 border-none rounded-xl text-xs font-semibold outline-none">
-                                <option value="Ativa">Ativa</option><option value="Pendente">Pendente</option><option value="Concluída">Concluída</option>
-                            </select>
-                            <button type="submit" class="w-full bg-slate-900 text-white font-black py-4 rounded-xl hover:bg-brand-600 transition-all">SALVAR DEMANDA</button>
-                        </form>
-                    </div>
-                </div>
-                <!-- Mapa -->
-                <div class="xl:col-span-8">
-                    <div class="bg-white p-2 rounded-[32px] card-shadow border border-slate-50 overflow-hidden">
-                        <div id="map"></div>
-                    </div>
-                </div>
-                <!-- Tabela -->
-                <div class="xl:col-span-12">
-                    <div class="bg-white rounded-[32px] card-shadow border border-slate-50 overflow-hidden">
-                        <div class="p-6 border-b border-slate-50 flex justify-between items-center">
-                            <h2 class="text-lg font-black">Histórico Operacional</h2>
-                            <button onclick="exportData()" class="text-[10px] font-black text-brand-600">EXPORTAR CSV</button>
-                        </div>
-                        <div class="overflow-x-auto custom-scrollbar">
-                            <table class="w-full text-left border-collapse">
-                                <thead>
-                                    <tr class="bg-slate-50/50">
-                                        <th class="px-6 py-4 text-[9px] font-black text-slate-400 uppercase">Demanda</th>
-                                        <th class="px-6 py-4 text-[9px] font-black text-slate-400 uppercase">Status</th>
-                                        <th class="px-6 py-4 text-[9px] font-black text-slate-400 uppercase">Prioridade</th>
-                                        <th class="px-6 py-4 text-[9px] font-black text-slate-400 uppercase">Est. vs Real</th>
-                                        <th class="px-6 py-4 text-[9px] font-black text-slate-400 uppercase text-right">Ações</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="demandTableBody" class="divide-y divide-slate-50"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
+<div class="selectors">
+  <div class="selector-group">
+    <label>Estrutura</label>
+    <select id="sel-estrutura" disabled>
+      <option value="">— Carregando —</option>
+    </select>
+  </div>
+  <div class="selector-group">
+    <label>Tensão</label>
+    <select id="sel-tensao" disabled>
+      <option value="">— Selecione —</option>
+    </select>
+  </div>
+  <div class="selector-group">
+    <label>Tipo de Isolador</label>
+    <select id="sel-isolador" disabled>
+      <option value="">— Selecione —</option>
+    </select>
+  </div>
+  <div class="selector-group">
+    <label>Tipo de Cruzeta</label>
+    <select id="sel-cruzeta" disabled>
+      <option value="">— Selecione —</option>
+    </select>
+  </div>
+</div>
 
-        <!-- Tab: Dashboard -->
-        <div id="dashboard" class="tab-content container mx-auto p-6 space-y-8">
-            <!-- Key Metrics -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <div class="bg-white p-6 rounded-3xl card-shadow border border-slate-50">
-                    <p class="text-[10px] font-black text-slate-400 uppercase mb-1">Eficiência Média</p>
-                    <p id="dashEfficiency" class="text-3xl font-black text-brand-600">0%</p>
-                    <p class="text-[9px] text-slate-400 font-bold mt-1">Real vs Estimado</p>
-                </div>
-                <div class="bg-white p-6 rounded-3xl card-shadow border border-slate-50">
-                    <p class="text-[10px] font-black text-slate-400 uppercase mb-1">Dia de Pico</p>
-                    <p id="dashPeakDay" class="text-xl font-black text-slate-800">-</p>
-                    <p id="dashPeakCount" class="text-[9px] text-slate-400 font-bold mt-1">0 demandas</p>
-                </div>
-                <div class="bg-white p-6 rounded-3xl card-shadow border border-slate-50">
-                    <p class="text-[10px] font-black text-slate-400 uppercase mb-1">Maior Solicitante</p>
-                    <p id="dashTopUser" class="text-xl font-black text-slate-800">-</p>
-                    <p id="dashTopUserTime" class="text-[9px] text-slate-400 font-bold mt-1">0h total</p>
-                </div>
-                <div class="bg-white p-6 rounded-3xl card-shadow border border-slate-50">
-                    <p class="text-[10px] font-black text-slate-400 uppercase mb-1">Concluídas</p>
-                    <p id="dashCompleted" class="text-3xl font-black text-slate-800">0</p>
-                    <p id="dashPending" class="text-[9px] text-slate-400 font-bold mt-1">0 pendentes</p>
-                </div>
-            </div>
+<div class="nome-box">
+  <span class="nome-label">Nome</span>
+  <span class="nome-valor vazio" id="nome-montado">Aguardando seleção...</span>
+</div>
 
-            <!-- Charts Row 1 -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div class="bg-white p-8 rounded-[32px] card-shadow border border-slate-50">
-                    <h2 class="text-sm font-black mb-6 uppercase tracking-widest">Demandas por Dia (Volume)</h2>
-                    <div class="chart-container"><canvas id="dailyChart"></canvas></div>
-                </div>
-                <div class="bg-white p-8 rounded-[32px] card-shadow border border-slate-50">
-                    <h2 class="text-sm font-black mb-6 uppercase tracking-widest">Tempo Estimado vs Real</h2>
-                    <div class="chart-container"><canvas id="efficiencyChart"></canvas></div>
-                </div>
-            </div>
+<label class="toggle-cnv">
+  <input type="checkbox" id="toggle-cnv"> Mostrar variante (CNV)
+</label>
 
-            <!-- Charts Row 2 -->
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div class="bg-white p-8 rounded-[32px] card-shadow border border-slate-50 lg:col-span-2">
-                    <h2 class="text-sm font-black mb-6 uppercase tracking-widest">Ranking de Solicitantes (Horas)</h2>
-                    <div class="chart-container"><canvas id="userRankingChart"></canvas></div>
-                </div>
-                <div class="bg-white p-8 rounded-[32px] card-shadow border border-slate-50">
-                    <h2 class="text-sm font-black mb-6 uppercase tracking-widest">Distribuição por Categoria</h2>
-                    <div class="chart-container"><canvas id="catDistributionChart"></canvas></div>
-                </div>
-            </div>
-        </div>
-    </div>
+<div class="tabela-wrap">
+  <div class="tabela-header">
+    <span>Código</span>
+    <span>Descrição</span>
+    <span>Qtd</span>
+  </div>
+  <table>
+    <thead><tr><th>Código</th><th>Descrição</th><th>Qtd</th></tr></thead>
+    <tbody id="tabela-body">
+      <tr><td colspan="3" class="empty-state">Selecione os filtros acima para ver os materiais</td></tr>
+    </tbody>
+  </table>
+</div>
 
-    <!-- Edit Modal -->
-    <div id="editModal" class="modal">
-        <div class="bg-white w-full max-w-lg rounded-[32px] card-shadow p-8 m-4 relative max-h-[90vh] overflow-y-auto custom-scrollbar">
-            <button onclick="closeEditModal()" class="absolute top-6 right-6 text-slate-400 hover:text-slate-900 font-black">FECHAR</button>
-            <h2 class="text-xl font-black mb-6 flex items-center"><span class="w-1 h-5 bg-brand-500 rounded-full mr-2"></span>Editar Demanda</h2>
-            <form id="editForm" class="space-y-4">
-                <input type="hidden" id="editId">
-                <div class="grid grid-cols-1 gap-3">
-                    <label class="text-[10px] font-black text-slate-400 uppercase">Título</label>
-                    <input type="text" id="editTitle" required class="w-full px-4 py-3 bg-slate-50 border-none rounded-xl text-xs font-semibold outline-none focus:ring-2 focus:ring-brand-500">
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="space-y-1">
-                        <label class="text-[10px] font-black text-slate-400 uppercase">Status</label>
-                        <select id="editStatus" class="w-full px-4 py-3 bg-slate-50 border-none rounded-xl text-xs font-semibold outline-none">
-                            <option value="Ativa">Ativa</option><option value="Pendente">Pendente</option><option value="Concluída">Concluída</option>
-                        </select>
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-[10px] font-black text-slate-400 uppercase">Prioridade</label>
-                        <select id="editPriority" class="w-full px-4 py-3 bg-slate-50 border-none rounded-xl text-xs font-semibold outline-none">
-                            <option value="Baixa">Baixa</option><option value="Média">Média</option><option value="Alta">Alta</option><option value="Crítica">Crítica</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="space-y-1">
-                        <label class="text-[10px] font-black text-slate-400 uppercase">Real (h)</label>
-                        <input type="number" id="editRealDuration" step="0.1" class="w-full px-4 py-3 bg-slate-50 border-none rounded-xl text-xs font-semibold outline-none">
-                    </div>
-                    <div class="space-y-1">
-                        <label class="text-[10px] font-black text-slate-400 uppercase">Categoria</label>
-                        <select id="editCategory" class="w-full px-4 py-3 bg-slate-50 border-none rounded-xl text-xs font-semibold outline-none">
-                            <option value="Suporte">Suporte</option><option value="Dev">Dev</option><option value="Infra">Infra</option><option value="Comercial">Comercial</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="space-y-2">
-                    <label class="text-[10px] font-black text-slate-400 uppercase">Anexos (Links)</label>
-                    <div id="attachmentsList" class="space-y-2"></div>
-                    <div class="flex gap-2">
-                        <input type="text" id="newAttachment" placeholder="URL do anexo" class="flex-1 px-4 py-3 bg-slate-50 border-none rounded-xl text-xs font-semibold outline-none">
-                        <button type="button" onclick="addAttachment()" class="px-4 py-3 bg-slate-900 text-white rounded-xl text-[10px] font-black">ADICIONAR</button>
-                    </div>
-                </div>
-                <button type="submit" class="w-full bg-brand-500 text-white font-black py-4 rounded-xl hover:bg-brand-600 transition-all mt-4 shadow-lg shadow-brand-100">ATUALIZAR DADOS</button>
-            </form>
-        </div>
-    </div>
+<script>
+// ─── CONFIGURAÇÃO ────────────────────────────────────────────────────────────
+const SHEET_ID = "1L9iv_Vqpot2ay218NWcpWRvYC8oqvl6RiRQ5bgMUfYw";
+const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv`;
+
+let dados = [];
+
+// ─── REFS ─────────────────────────────────────────────────────────────────────
+const selEstrutura = document.getElementById('sel-estrutura');
+const selTensao    = document.getElementById('sel-tensao');
+const selIsolador  = document.getElementById('sel-isolador');
+const selCruzeta   = document.getElementById('sel-cruzeta');
+const nomeMontado  = document.getElementById('nome-montado');
+const tabelaBody   = document.getElementById('tabela-body');
+const toggleCnv    = document.getElementById('toggle-cnv');
+const loading      = document.getElementById('loading');
+
+// ─── CORE ─────────────────────────────────────────────────────────────────────
+async function carregarDados() {
+  loading.style.display = 'flex';
+  try {
+    const response = await fetch(CSV_URL);
+    const csvText = await response.text();
+    dados = parseCSV(csvText);
+    initSelectors();
+  } catch (e) {
+    alert("Erro ao carregar dados da planilha. Verifique sua conexão e se a planilha está pública.");
+    console.error(e);
+  } finally {
+    loading.style.display = 'none';
+  }
+}
+
+function parseCSV(csv) {
+  const lines = csv.split(/\r?\n/);
+  const result = [];
+  
+  for (let i = 0; i < lines.length; i++) {
+    const row = parseCSVRow(lines[i]);
+    if (row.length < 4 || row[0] === "Nome") continue;
     
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+    const fullName = row[0].trim();
+    const { est, ten, iso, cru, cnv } = parseFullName(fullName);
+    
+    result.push({
+      estrutura: est,
+      tensao: ten,
+      isolador: iso,
+      cruzeta: cru,
+      cnv: cnv,
+      codigo: row[1].trim(),
+      descricao: row[2].trim(),
+      qtd: row[3].trim()
+    });
+  }
+  return result;
+}
 
-    <script>
-        // Auth Logic
-        const loginForm = document.getElementById('loginForm');
-        const loginScreen = document.getElementById('loginScreen');
-        const mainApp = document.getElementById('mainApp');
-        
-        loginForm.addEventListener('submit', (e) => {
-            e.preventDefault();
-            if (document.getElementById('username').value === "admin" && document.getElementById('password').value === "admin123") {
-                sessionStorage.setItem('isLoggedIn', 'true');
-                showApp();
-            } else {
-                document.getElementById('loginError').classList.remove('hidden');
-            }
-        });
+function parseCSVRow(line) {
+  const row = [];
+  let inQuotes = false;
+  let current = "";
+  for (let char of line) {
+    if (char === '"') inQuotes = !inQuotes;
+    else if (char === ',' && !inQuotes) {
+      row.push(current);
+      current = "";
+    } else current += char;
+  }
+  row.push(current);
+  return row;
+}
 
-        function showApp() {
-            loginScreen.style.display = 'none';
-            mainApp.classList.remove('hidden');
-            setTimeout(() => mainApp.style.opacity = '1', 50);
-            initApp();
-        }
+function parseFullName(name) {
+  let cnv = false;
+  if (name.includes("(CNV)")) {
+    cnv = true;
+    name = name.replace("(CNV)", "").trim();
+  }
+  
+  let est = "N1", ten = "", iso = "", cru = "";
+  
+  // Mapeamento manual baseado nos padrões conhecidos
+  if (name.includes("25KV HI-TOP CRUZETA T 1900mm CEMAR")) {
+    est = "N1"; ten = "25KV"; iso = "HI-TOP"; cru = "CRUZETA T 1900mm CEMAR";
+  } else if (name.includes("13,8KV PILAR CRUZETA T 1900mm CEMAR")) {
+    est = "N1"; ten = "13,8KV"; iso = "PILAR"; cru = "CRUZETA T 1900mm CEMAR";
+  } else if (name.includes("34,5KV PILAR CRUZETA T 1900mm  CEMAR")) {
+    est = "N1"; ten = "34,5KV"; iso = "PILAR"; cru = "CRUZETA T 1900mm CEMAR";
+  } else if (name.includes("34KV ISOL MULT CRUZ T 1900mm  CEMAR")) {
+    est = "N1"; ten = "34KV"; iso = "ISOL MULT"; cru = "CRUZ T 1900mm CEMAR";
+  } else if (name.includes("(ZCORR) N1 13,8KV CRUZ FV 250 Dan 1900mm EQTL-RS")) {
+    est = "(ZCORR) N1"; ten = "13,8KV"; iso = "PILAR"; cru = "CRUZ FV 250 Dan 1900mm EQTL-RS";
+  } else if (name.includes("(ZCORR) N1 23,1KV CRUZ FV 250 Dan 1900mm EQTL-RS")) {
+    est = "(ZCORR) N1"; ten = "23,1KV"; iso = "PILAR"; cru = "CRUZ FV 250 Dan 1900mm EQTL-RS";
+  } else if (name.includes("13,8KV CRUZETA T 1900mm PILAR EQUATORIAL")) {
+    est = "N1"; ten = "13,8KV"; iso = "PILAR"; cru = "CRUZETA T 1900mm EQUATORIAL";
+  } else {
+    // Regex genérico
+    const match = name.match(/(\S+)\s+(\d+[\.,]?\d*KV)\s+(.*?)\s+(CRUZ.*)/);
+    if (match) {
+      est = match[1]; ten = match[2]; iso = match[3]; cru = match[4];
+    } else {
+      const matchTen = name.match(/(\d+[\.,]?\d*KV)/);
+      if (matchTen) ten = matchTen[1];
+      cru = "OUTROS"; iso = "PILAR";
+    }
+  }
+  
+  return { est: est.trim(), ten: ten.trim(), iso: iso.trim(), cru: cru.trim(), cnv };
+}
 
-        function logout() { sessionStorage.removeItem('isLoggedIn'); location.reload(); }
+// ─── UI ───────────────────────────────────────────────────────────────────────
+function unique(arr) { return [...new Set(arr)].sort(); }
 
-        // Tab Logic
-        function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-            document.getElementById(tabId).classList.add('active');
-            event.currentTarget.classList.add('active');
-            if (tabId === 'dashboard') updateDashboard();
-            if (tabId === 'operacional') setTimeout(() => map.invalidateSize(), 100);
-        }
+function fillSelect(sel, opcoes, placeholder) {
+  sel.innerHTML = `<option value="">${placeholder}</option>`;
+  opcoes.forEach(o => { const opt = document.createElement('option'); opt.value = o; opt.textContent = o; sel.appendChild(opt); });
+  sel.disabled = opcoes.length === 0;
+}
 
-        // App Logic
-        let demands = JSON.parse(localStorage.getItem('demandflow_ultimate_v1')) || [];
-        let map, markerLayer, charts = {};
+function initSelectors() {
+  fillSelect(selEstrutura, unique(dados.map(d => d.estrutura)), '— Selecione —');
+  selTensao.value = ''; selIsolador.value = ''; selCruzeta.value = '';
+  selTensao.disabled = true; selIsolador.disabled = true; selCruzeta.disabled = true;
+  atualizar();
+}
 
-        function initApp() {
-            initMap();
-            renderTable();
-            if (sessionStorage.getItem('isLoggedIn') === 'true') {
-                if (document.getElementById('dashboard').classList.contains('active')) updateDashboard();
-            }
-        }
+selEstrutura.addEventListener('change', () => {
+  const est = selEstrutura.value;
+  selTensao.value = ''; selIsolador.value = ''; selCruzeta.value = '';
+  if (!est) { fillSelect(selTensao, [], '— Selecione —'); }
+  else {
+    const tensoes = unique(dados.filter(d => d.estrutura === est).map(d => d.tensao));
+    fillSelect(selTensao, tensoes, '— Selecione —');
+  }
+  selIsolador.disabled = true; selCruzeta.disabled = true;
+  atualizar();
+});
 
-        function initMap() {
-            map = L.map('map', { zoomControl: false }).setView([-23.5505, -46.6333], 12);
-            L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png').addTo(map);
-            markerLayer = L.layerGroup().addTo(map);
-            map.on('click', (e) => {
-                document.getElementById('lat').value = e.latlng.lat.toFixed(6);
-                document.getElementById('lng').value = e.latlng.lng.toFixed(6);
-            });
-            updateMap();
-        }
+selTensao.addEventListener('change', () => {
+  const est = selEstrutura.value;
+  const ten = selTensao.value;
+  selIsolador.value = ''; selCruzeta.value = '';
+  if (!ten) { fillSelect(selIsolador, [], '— Selecione —'); }
+  else {
+    const isoladores = unique(dados.filter(d => d.estrutura === est && d.tensao === ten).map(d => d.isolador));
+    fillSelect(selIsolador, isoladores, '— Selecione —');
+  }
+  selCruzeta.disabled = true;
+  atualizar();
+});
 
-        function updateMap() {
-            markerLayer.clearLayers();
-            demands.forEach(d => {
-                const color = d.priority === 'Crítica' ? '#ef4444' : d.priority === 'Alta' ? '#f59e0b' : '#10b981';
-                L.circleMarker([d.lat, d.lng], { radius: 6, color: color, fillOpacity: 0.8 }).bindPopup(`<b>${d.title}</b>`).addTo(markerLayer);
-            });
-        }
+selIsolador.addEventListener('change', () => {
+  const est = selEstrutura.value;
+  const ten = selTensao.value;
+  const iso = selIsolador.value;
+  selCruzeta.value = '';
+  if (!iso) { fillSelect(selCruzeta, [], '— Selecione —'); }
+  else {
+    const cruzetas = unique(dados.filter(d => d.estrutura === est && d.tensao === ten && d.isolador === iso).map(d => d.cruzeta));
+    fillSelect(selCruzeta, cruzetas, '— Selecione —');
+  }
+  atualizar();
+});
 
-        document.getElementById('demandForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            demands.push({
-                id: Date.now(),
-                date: new Date().toISOString().split('T')[0],
-                title: document.getElementById('title').value,
-                requester: document.getElementById('requester').value,
-                priority: document.getElementById('priority').value,
-                category: document.getElementById('category').value,
-                status: document.getElementById('status').value,
-                lat: parseFloat(document.getElementById('lat').value),
-                lng: parseFloat(document.getElementById('lng').value),
-                est_duration: parseFloat(document.getElementById('est_duration').value),
-                real_duration: parseFloat(document.getElementById('real_duration').value) || 0,
-                attachments: []
-            });
-            localStorage.setItem('demandflow_ultimate_v1', JSON.stringify(demands));
-            renderTable(); updateMap(); this.reset();
-        });
+selCruzeta.addEventListener('change', atualizar);
+toggleCnv.addEventListener('change', atualizar);
 
-        function renderTable() {
-            const tbody = document.getElementById('demandTableBody');
-            tbody.innerHTML = '';
-            demands.forEach(d => {
-                const diff = d.real_duration ? (d.real_duration - d.est_duration).toFixed(1) : '-';
-                const diffColor = d.real_duration > d.est_duration ? 'text-red-500' : 'text-brand-600';
-                const attachmentsCount = d.attachments ? d.attachments.length : 0;
-                tbody.innerHTML += `
-                    <tr class="hover:bg-slate-50/50 transition-colors">
-                        <td class="px-6 py-4">
-                            <div class="font-bold text-xs">${d.title}</div>
-                            <div class="flex items-center gap-2">
-                                <span class="text-[9px] font-black text-slate-400 uppercase">${d.requester}</span>
-                                ${attachmentsCount > 0 ? `<span class="text-[9px] bg-slate-100 px-1.5 py-0.5 rounded text-slate-500">📎 ${attachmentsCount}</span>` : ''}
-                            </div>
-                        </td>
-                        <td class="px-6 py-4"><span class="status-pill ${d.status === 'Concluída' ? 'bg-slate-800 text-white' : 'bg-brand-100 text-brand-700'}">${d.status}</span></td>
-                        <td class="px-6 py-4"><span class="status-pill ${d.priority === 'Crítica' ? 'bg-red-100 text-red-600' : 'bg-slate-100'}">${d.priority}</span></td>
-                        <td class="px-6 py-4 text-xs font-bold">${d.est_duration}h / <span class="${diffColor}">${d.real_duration}h</span></td>
-                        <td class="px-6 py-4 text-right space-x-4">
-                            <button onclick="openEditModal(${d.id})" class="text-brand-600 hover:text-brand-700 font-black text-[9px]">EDITAR</button>
-                            <button onclick="deleteDemand(${d.id})" class="text-slate-300 hover:text-red-500 font-black text-[9px]">EXCLUIR</button>
-                        </td>
-                    </tr>`;
-            });
-        }
+function atualizar() {
+  const est = selEstrutura.value;
+  const ten = selTensao.value;
+  const iso = selIsolador.value;
+  const cru = selCruzeta.value;
+  const cnv = toggleCnv.checked;
 
-        function deleteDemand(id) {
-            if(!confirm('Deseja realmente excluir esta demanda?')) return;
-            demands = demands.filter(d => d.id !== id);
-            localStorage.setItem('demandflow_ultimate_v1', JSON.stringify(demands));
-            renderTable(); updateMap();
-        }
+  if (est && ten && iso && cru) {
+    const prefixo = cnv ? '(CNV) ' : '';
+    nomeMontado.textContent = `${prefixo}${est} ${ten} ${iso} ${cru}`;
+    nomeMontado.classList.remove('vazio');
+  } else {
+    nomeMontado.textContent = 'Aguardando seleção...';
+    nomeMontado.classList.add('vazio');
+  }
 
-        // Edit Logic
-        let currentEditingAttachments = [];
+  if (!est || !ten || !iso || !cru) {
+    tabelaBody.innerHTML = '<tr><td colspan="3" class="empty-state">Selecione os filtros acima para ver os materiais</td></tr>';
+    return;
+  }
 
-        function openEditModal(id) {
-            const d = demands.find(item => item.id === id);
-            if (!d) return;
+  const filtrados = dados.filter(d =>
+    d.estrutura === est && d.tensao === ten &&
+    d.isolador === iso && d.cruzeta === cru && d.cnv === cnv
+  );
 
-            document.getElementById('editId').value = d.id;
-            document.getElementById('editTitle').value = d.title;
-            document.getElementById('editStatus').value = d.status;
-            document.getElementById('editPriority').value = d.priority;
-            document.getElementById('editCategory').value = d.category;
-            document.getElementById('editRealDuration').value = d.real_duration;
-            
-            currentEditingAttachments = [...(d.attachments || [])];
-            renderAttachments();
-            
-            document.getElementById('editModal').classList.add('active');
-        }
+  if (filtrados.length === 0) {
+    tabelaBody.innerHTML = '<tr><td colspan="3" class="empty-state">Nenhum material encontrado</td></tr>';
+    return;
+  }
 
-        function closeEditModal() {
-            document.getElementById('editModal').classList.remove('active');
-        }
+  tabelaBody.innerHTML = filtrados.map(d => `
+    <tr><td>${d.codigo}</td><td>${d.descricao}</td><td>${d.qtd}</td></tr>
+  `).join('');
+}
 
-        function renderAttachments() {
-            const list = document.getElementById('attachmentsList');
-            list.innerHTML = '';
-            currentEditingAttachments.forEach((url, index) => {
-                list.innerHTML += `
-                    <div class="flex items-center justify-between bg-slate-50 p-3 rounded-xl">
-                        <a href="${url}" target="_blank" class="text-[10px] font-bold text-brand-600 truncate max-w-[200px]">${url}</a>
-                        <button type="button" onclick="removeAttachment(${index})" class="text-red-500 font-black text-[9px]">REMOVER</button>
-                    </div>`;
-            });
-        }
-
-        function addAttachment() {
-            const input = document.getElementById('newAttachment');
-            const url = input.value.trim();
-            if (url) {
-                currentEditingAttachments.push(url);
-                input.value = '';
-                renderAttachments();
-            }
-        }
-
-        function removeAttachment(index) {
-            currentEditingAttachments.splice(index, 1);
-            renderAttachments();
-        }
-
-        document.getElementById('editForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const id = parseInt(document.getElementById('editId').value);
-            const index = demands.findIndex(d => d.id === id);
-            
-            if (index !== -1) {
-                demands[index] = {
-                    ...demands[index],
-                    title: document.getElementById('editTitle').value,
-                    status: document.getElementById('editStatus').value,
-                    priority: document.getElementById('editPriority').value,
-                    category: document.getElementById('editCategory').value,
-                    real_duration: parseFloat(document.getElementById('editRealDuration').value) || 0,
-                    attachments: currentEditingAttachments
-                };
-                
-                localStorage.setItem('demandflow_ultimate_v1', JSON.stringify(demands));
-                renderTable();
-                updateMap();
-                closeEditModal();
-                if (typeof showToast === 'function') showToast('Demanda atualizada!', 'success');
-            }
-        });
-
-        function updateDashboard() {
-            if (!demands.length) return;
-
-            // Metrics
-            const completed = demands.filter(d => d.status === 'Concluída');
-            const totalEst = completed.reduce((acc, d) => acc + d.est_duration, 0);
-            const totalReal = completed.reduce((acc, d) => acc + d.real_duration, 0);
-            const efficiency = totalEst ? Math.round((totalEst / totalReal) * 100) : 0;
-            
-            document.getElementById('dashEfficiency').innerText = efficiency + '%';
-            document.getElementById('dashCompleted').innerText = completed.length;
-            document.getElementById('dashPending').innerText = demands.length - completed.length + ' pendentes';
-
-            const dailyCount = {};
-            demands.forEach(d => dailyCount[d.date] = (dailyCount[d.date] || 0) + 1);
-            const peakDay = Object.keys(dailyCount).reduce((a, b) => dailyCount[a] > dailyCount[b] ? a : b, '-');
-            document.getElementById('dashPeakDay').innerText = peakDay;
-            document.getElementById('dashPeakCount').innerText = (dailyCount[peakDay] || 0) + ' demandas';
-
-            const userTime = {};
-            demands.forEach(d => userTime[d.requester] = (userTime[d.requester] || 0) + d.real_duration);
-            const topUser = Object.keys(userTime).reduce((a, b) => userTime[a] > userTime[b] ? a : b, '-');
-            document.getElementById('dashTopUser').innerText = topUser;
-            document.getElementById('dashTopUserTime').innerText = (userTime[topUser] || 0).toFixed(1) + 'h total';
-
-            // Charts
-            renderCharts(dailyCount, completed, userTime);
-        }
-
-        function renderCharts(dailyCount, completed, userTime) {
-            // Daily Volume
-            if (charts.daily) charts.daily.destroy();
-            charts.daily = new Chart(document.getElementById('dailyChart'), {
-                type: 'line',
-                data: { labels: Object.keys(dailyCount), datasets: [{ label: 'Demandas', data: Object.values(dailyCount), borderColor: '#10b981', tension: 0.4, fill: true, backgroundColor: 'rgba(16, 185, 129, 0.05)' }] },
-                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-            });
-
-            // Efficiency
-            if (charts.efficiency) charts.efficiency.destroy();
-            charts.efficiency = new Chart(document.getElementById('efficiencyChart'), {
-                type: 'bar',
-                data: { labels: completed.map(d => d.title.substring(0, 10)), datasets: [
-                    { label: 'Estimado', data: completed.map(d => d.est_duration), backgroundColor: '#e2e8f0', borderRadius: 5 },
-                    { label: 'Real', data: completed.map(d => d.real_duration), backgroundColor: '#10b981', borderRadius: 5 }
-                ]},
-                options: { responsive: true, maintainAspectRatio: false }
-            });
-
-            // User Ranking
-            if (charts.user) charts.user.destroy();
-            charts.user = new Chart(document.getElementById('userRankingChart'), {
-                type: 'bar',
-                data: { labels: Object.keys(userTime), datasets: [{ data: Object.values(userTime), backgroundColor: '#0f172a', borderRadius: 10 }] },
-                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
-            });
-
-            // Category
-            const catData = {}; demands.forEach(d => catData[d.category] = (catData[d.category] || 0) + 1);
-            if (charts.cat) charts.cat.destroy();
-            charts.cat = new Chart(document.getElementById('catDistributionChart'), {
-                type: 'doughnut',
-                data: { labels: Object.keys(catData), datasets: [{ data: Object.values(catData), backgroundColor: ['#10b981', '#3b82f6', '#f59e0b', '#ef4444'] }] },
-                options: { responsive: true, maintainAspectRatio: false, cutout: '70%' }
-            });
-        }
-
-        window.onload = () => { if (sessionStorage.getItem('isLoggedIn') === 'true') showApp(); };
-    </script>
+// Iniciar carga automática
+carregarDados();
+</script>
 </body>
 </html>
