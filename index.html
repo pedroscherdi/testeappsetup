@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Seletor de Estruturas Dinâmico</title>
+<title>Seletor de Estruturas Pro</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@600;700&display=swap');
 
@@ -202,22 +202,35 @@
   .loading-overlay {
     position: fixed;
     top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(6, 15, 10, 0.8);
+    background: rgba(6, 15, 10, 0.9);
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
     z-index: 100;
     color: var(--accent);
-    font-size: 0.8rem;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
     display: none;
   }
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid var(--bg3);
+    border-top: 3px solid var(--accent);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 16px;
+  }
+
+  @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 </style>
 </head>
 <body>
 
-<div id="loading" class="loading-overlay">Sincronizando dados...</div>
+<div id="loading" class="loading-overlay">
+  <div class="spinner"></div>
+  <div style="font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase;">Sincronizando dados...</div>
+</div>
 
 <div class="header-container">
   <h1>Seletor de Estruturas</h1>
@@ -296,11 +309,12 @@ async function carregarDados() {
   loading.style.display = 'flex';
   try {
     const response = await fetch(CSV_URL);
+    if (!response.ok) throw new Error('Falha na resposta da rede');
     const csvText = await response.text();
     dados = parseCSV(csvText);
     initSelectors();
   } catch (e) {
-    alert("Erro ao carregar dados da planilha. Verifique sua conexão e se a planilha está pública.");
+    alert("Erro ao carregar dados. Se estiver abrindo o arquivo localmente, o navegador pode bloquear por segurança (CORS).");
     console.error(e);
   } finally {
     loading.style.display = 'none';
@@ -313,17 +327,13 @@ function parseCSV(csv) {
   
   for (let i = 0; i < lines.length; i++) {
     const row = parseCSVRow(lines[i]);
-    if (row.length < 4 || row[0] === "Nome") continue;
+    if (row.length < 4 || !row[0] || row[0].toLowerCase() === "nome") continue;
     
     const fullName = row[0].trim();
-    const { est, ten, iso, cru, cnv } = parseFullName(fullName);
+    const parsed = parseFullName(fullName);
     
     result.push({
-      estrutura: est,
-      tensao: ten,
-      isolador: iso,
-      cruzeta: cru,
-      cnv: cnv,
+      ...parsed,
       codigo: row[1].trim(),
       descricao: row[2].trim(),
       qtd: row[3].trim()
@@ -354,40 +364,46 @@ function parseFullName(name) {
     name = name.replace("(CNV)", "").trim();
   }
   
-  let est = "N1", ten = "", iso = "", cru = "";
+  let est = "", ten = "", iso = "", cru = "";
   
-  // Mapeamento manual baseado nos padrões conhecidos
-  if (name.includes("25KV HI-TOP CRUZETA T 1900mm CEMAR")) {
-    est = "N1"; ten = "25KV"; iso = "HI-TOP"; cru = "CRUZETA T 1900mm CEMAR";
-  } else if (name.includes("13,8KV PILAR CRUZETA T 1900mm CEMAR")) {
-    est = "N1"; ten = "13,8KV"; iso = "PILAR"; cru = "CRUZETA T 1900mm CEMAR";
-  } else if (name.includes("34,5KV PILAR CRUZETA T 1900mm  CEMAR")) {
-    est = "N1"; ten = "34,5KV"; iso = "PILAR"; cru = "CRUZETA T 1900mm CEMAR";
-  } else if (name.includes("34KV ISOL MULT CRUZ T 1900mm  CEMAR")) {
-    est = "N1"; ten = "34KV"; iso = "ISOL MULT"; cru = "CRUZ T 1900mm CEMAR";
-  } else if (name.includes("(ZCORR) N1 13,8KV CRUZ FV 250 Dan 1900mm EQTL-RS")) {
-    est = "(ZCORR) N1"; ten = "13,8KV"; iso = "PILAR"; cru = "CRUZ FV 250 Dan 1900mm EQTL-RS";
-  } else if (name.includes("(ZCORR) N1 23,1KV CRUZ FV 250 Dan 1900mm EQTL-RS")) {
-    est = "(ZCORR) N1"; ten = "23,1KV"; iso = "PILAR"; cru = "CRUZ FV 250 Dan 1900mm EQTL-RS";
-  } else if (name.includes("13,8KV CRUZETA T 1900mm PILAR EQUATORIAL")) {
-    est = "N1"; ten = "13,8KV"; iso = "PILAR"; cru = "CRUZETA T 1900mm EQUATORIAL";
-  } else {
-    // Regex genérico
-    const match = name.match(/(\S+)\s+(\d+[\.,]?\d*KV)\s+(.*?)\s+(CRUZ.*)/);
-    if (match) {
-      est = match[1]; ten = match[2]; iso = match[3]; cru = match[4];
+  // 1. Extrair Tensão (Padrão: 00,0KV ou 00KV)
+  const tenMatch = name.match(/(\d+[\.,]?\d*KV)/i);
+  if (tenMatch) {
+    ten = tenMatch[1].toUpperCase();
+    // A Estrutura é tudo o que vem ANTES da tensão
+    const parts = name.split(tenMatch[0]);
+    est = parts[0].trim();
+    
+    // O resto é o que vem DEPOIS da tensão
+    let resto = parts[1].trim();
+    
+    // 2. Extrair Cruzeta (Padrão: Começa com "CRUZ")
+    const cruMatch = resto.match(/(CRUZ.*)/i);
+    if (cruMatch) {
+      cru = cruMatch[1].trim();
+      // O Isolador é o que sobrou entre a tensão e a cruzeta
+      iso = resto.replace(cruMatch[0], "").trim();
     } else {
-      const matchTen = name.match(/(\d+[\.,]?\d*KV)/);
-      if (matchTen) ten = matchTen[1];
-      cru = "OUTROS"; iso = "PILAR";
+      // Se não achar cruzeta, tenta pegar a última palavra como isolador
+      iso = resto;
+      cru = "NÃO ESPECIFICADA";
     }
+  } else {
+    // Fallback se não encontrar tensão
+    est = name;
+    ten = "N/A";
+    iso = "N/A";
+    cru = "N/A";
   }
   
-  return { est: est.trim(), ten: ten.trim(), iso: iso.trim(), cru: cru.trim(), cnv };
+  // Limpeza final para garantir que não fiquem vazios
+  if (!iso) iso = "PADRÃO";
+  
+  return { est, ten, iso, cru, cnv };
 }
 
 // ─── UI ───────────────────────────────────────────────────────────────────────
-function unique(arr) { return [...new Set(arr)].sort(); }
+function unique(arr) { return [...new Set(arr)].filter(x => x).sort(); }
 
 function fillSelect(sel, opcoes, placeholder) {
   sel.innerHTML = `<option value="">${placeholder}</option>`;
@@ -396,21 +412,33 @@ function fillSelect(sel, opcoes, placeholder) {
 }
 
 function initSelectors() {
-  fillSelect(selEstrutura, unique(dados.map(d => d.estrutura)), '— Selecione —');
-  selTensao.value = ''; selIsolador.value = ''; selCruzeta.value = '';
-  selTensao.disabled = true; selIsolador.disabled = true; selCruzeta.disabled = true;
+  const estruturas = unique(dados.map(d => d.est));
+  fillSelect(selEstrutura, estruturas, '— Selecione —');
+  
+  selTensao.innerHTML = '<option value="">— Selecione —</option>';
+  selIsolador.innerHTML = '<option value="">— Selecione —</option>';
+  selCruzeta.innerHTML = '<option value="">— Selecione —</option>';
+  
+  selTensao.disabled = true;
+  selIsolador.disabled = true;
+  selCruzeta.disabled = true;
+  
   atualizar();
 }
 
 selEstrutura.addEventListener('change', () => {
   const est = selEstrutura.value;
   selTensao.value = ''; selIsolador.value = ''; selCruzeta.value = '';
-  if (!est) { fillSelect(selTensao, [], '— Selecione —'); }
-  else {
-    const tensoes = unique(dados.filter(d => d.estrutura === est).map(d => d.tensao));
+  
+  if (!est) {
+    fillSelect(selTensao, [], '— Selecione —');
+  } else {
+    const tensoes = unique(dados.filter(d => d.est === est).map(d => d.ten));
     fillSelect(selTensao, tensoes, '— Selecione —');
   }
-  selIsolador.disabled = true; selCruzeta.disabled = true;
+  
+  selIsolador.disabled = true;
+  selCruzeta.disabled = true;
   atualizar();
 });
 
@@ -418,11 +446,14 @@ selTensao.addEventListener('change', () => {
   const est = selEstrutura.value;
   const ten = selTensao.value;
   selIsolador.value = ''; selCruzeta.value = '';
-  if (!ten) { fillSelect(selIsolador, [], '— Selecione —'); }
-  else {
-    const isoladores = unique(dados.filter(d => d.estrutura === est && d.tensao === ten).map(d => d.isolador));
+  
+  if (!ten) {
+    fillSelect(selIsolador, [], '— Selecione —');
+  } else {
+    const isoladores = unique(dados.filter(d => d.est === est && d.ten === ten).map(d => d.iso));
     fillSelect(selIsolador, isoladores, '— Selecione —');
   }
+  
   selCruzeta.disabled = true;
   atualizar();
 });
@@ -432,9 +463,11 @@ selIsolador.addEventListener('change', () => {
   const ten = selTensao.value;
   const iso = selIsolador.value;
   selCruzeta.value = '';
-  if (!iso) { fillSelect(selCruzeta, [], '— Selecione —'); }
-  else {
-    const cruzetas = unique(dados.filter(d => d.estrutura === est && d.tensao === ten && d.isolador === iso).map(d => d.cruzeta));
+  
+  if (!iso) {
+    fillSelect(selCruzeta, [], '— Selecione —');
+  } else {
+    const cruzetas = unique(dados.filter(d => d.est === est && d.ten === ten && d.iso === iso).map(d => d.cruzeta));
     fillSelect(selCruzeta, cruzetas, '— Selecione —');
   }
   atualizar();
@@ -465,8 +498,8 @@ function atualizar() {
   }
 
   const filtrados = dados.filter(d =>
-    d.estrutura === est && d.tensao === ten &&
-    d.isolador === iso && d.cruzeta === cru && d.cnv === cnv
+    d.est === est && d.ten === ten &&
+    d.iso === iso && d.cruzeta === cru && d.cnv === cnv
   );
 
   if (filtrados.length === 0) {
